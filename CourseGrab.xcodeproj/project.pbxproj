@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		299FA6C62F75B265005BF4DB /* .swiftlint.yml in Resources */ = {isa = PBXBuildFile; fileRef = 299FA6C42F75B25A005BF4DB /* .swiftlint.yml */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		29B879D82F75ACA500A6678A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -24,12 +28,18 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		299FA6C42F75B25A005BF4DB /* .swiftlint.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = .swiftlint.yml; sourceTree = "<group>"; };
 		29B879CA2F75ACA300A6678A /* CourseGrab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CourseGrab.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		29B879D72F75ACA500A6678A /* CourseGrabTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CourseGrabTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		29B879E12F75ACA500A6678A /* CourseGrabUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CourseGrabUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		299FA6C02F75B16D005BF4DB /* ci_scripts */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ci_scripts;
+			sourceTree = "<group>";
+		};
 		29B879CC2F75ACA300A6678A /* CourseGrab */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = CourseGrab;
@@ -75,10 +85,12 @@
 		29B879C12F75ACA300A6678A = {
 			isa = PBXGroup;
 			children = (
+				299FA6C42F75B25A005BF4DB /* .swiftlint.yml */,
 				29B879CC2F75ACA300A6678A /* CourseGrab */,
 				29B879DA2F75ACA500A6678A /* CourseGrabTests */,
 				29B879E42F75ACA500A6678A /* CourseGrabUITests */,
 				29B879CB2F75ACA300A6678A /* Products */,
+				299FA6C02F75B16D005BF4DB /* ci_scripts */,
 			);
 			sourceTree = "<group>";
 		};
@@ -108,6 +120,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				299FA6C02F75B16D005BF4DB /* ci_scripts */,
 				29B879CC2F75ACA300A6678A /* CourseGrab */,
 			);
 			name = CourseGrab;
@@ -212,6 +225,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				299FA6C62F75B265005BF4DB /* .swiftlint.yml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
