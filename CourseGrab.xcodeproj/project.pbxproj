@@ -60,11 +60,6 @@
 			path = CourseGrabSecrets;
 			sourceTree = "<group>";
 		};
-		299FA70D2F75CCC8005BF4DB /* Configs */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Configs;
-			sourceTree = "<group>";
-		};
 		29B879CC2F75ACA300A6678A /* CourseGrab */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -118,7 +113,6 @@
 		29B879C12F75ACA300A6678A = {
 			isa = PBXGroup;
 			children = (
-				299FA70D2F75CCC8005BF4DB /* Configs */,
 				299FA7032F75BA69005BF4DB /* CourseGrabSecrets */,
 				299FA6C42F75B25A005BF4DB /* .swiftlint.yml */,
 				29B879CC2F75ACA300A6678A /* CourseGrab */,
@@ -157,7 +151,6 @@
 			fileSystemSynchronizedGroups = (
 				299FA6C02F75B16D005BF4DB /* ci_scripts */,
 				299FA7032F75BA69005BF4DB /* CourseGrabSecrets */,
-				299FA70D2F75CCC8005BF4DB /* Configs */,
 				29B879CC2F75ACA300A6678A /* CourseGrab */,
 			);
 			name = CourseGrab;
