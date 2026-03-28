@@ -58,6 +58,9 @@ class LoginViewModel: ObservableObject {
                 UserSessionManager.shared.googleToken = idToken
                 UserSessionManager.shared.displayName = user.profile?.name
                 UserSessionManager.shared.email = email
+
+                await UserSessionManager.shared.initializeSession()
+
                 success(email, user.profile?.name ?? "")
 
             } catch {

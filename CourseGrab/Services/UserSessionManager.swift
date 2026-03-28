@@ -2,20 +2,13 @@
 //  UserSessionManager.swift
 //  CourseGrab
 //
-//  Created by jiwon jeong on 3/27/26.
+//  Created by jiwon jeong on 3/26/26.
 //
 
 import Combine
 import FirebaseAuth
 import Foundation
 import GoogleSignIn
-
-enum SessionRestoreResult {
-    case success
-    case needsSignIn
-    case invalidEmail
-    case error(String)
-}
 
 class UserSessionManager: ObservableObject {
 
@@ -57,7 +50,6 @@ class UserSessionManager: ObservableObject {
         }
     }
 
-    // Session token from CourseGrab backend
     @Published var sessionToken: String? {
         didSet {
             if let sessionToken {
@@ -78,6 +70,25 @@ class UserSessionManager: ObservableObject {
         }
     }
 
+    @Published var deviceToken: String {
+        didSet {
+            KeychainManager.shared.save(deviceToken, forKey: "deviceToken")
+        }
+    }
+
+    @Published var sessionExpiration: Date? {
+        didSet {
+            if let sessionExpiration {
+                KeychainManager.shared.save(
+                    ISO8601DateFormatter().string(from: sessionExpiration),
+                    forKey: "sessionExpiration"
+                )
+            } else {
+                KeychainManager.shared.delete(forKey: "sessionExpiration")
+            }
+        }
+    }
+
     // MARK: - Private
 
     private var authStateHandle: AuthStateDidChangeListenerHandle?
@@ -85,12 +96,15 @@ class UserSessionManager: ObservableObject {
     // MARK: - Init
 
     private init() {
-        // Restore from Keychain on launch
         self.displayName = KeychainManager.shared.get(forKey: "displayName")
         self.email = KeychainManager.shared.get(forKey: "email")
         self.googleToken = KeychainManager.shared.get(forKey: "googleToken")
         self.sessionToken = KeychainManager.shared.get(forKey: "sessionToken")
         self.updateToken = KeychainManager.shared.get(forKey: "updateToken")
+        self.deviceToken = KeychainManager.shared.get(forKey: "deviceToken") ?? ""
+        if let expStr = KeychainManager.shared.get(forKey: "sessionExpiration") {
+            self.sessionExpiration = ISO8601DateFormatter().date(from: expStr)
+        }
 
         authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             guard let self else { return }
@@ -101,6 +115,35 @@ class UserSessionManager: ObservableObject {
     }
 
     // MARK: - Session Functions
+
+    func initializeSession() async {
+        guard let googleToken else { return }
+        do {
+            let auth = try await NetworkManager.shared.initializeSession(googleToken: googleToken)
+            sessionToken = auth.sessionToken
+            updateToken = auth.updateToken
+            sessionExpiration = auth.sessionExpiration
+        } catch {
+            print("Failed to initialize session: \(error)")
+        }
+    }
+
+    func refreshSessionIfNeeded() async {
+        guard let expiration = sessionExpiration else {
+            await initializeSession()
+            return
+        }
+        if expiration <= Date() {
+            do {
+                let auth = try await NetworkManager.shared.updateSession()
+                sessionToken = auth.sessionToken
+                updateToken = auth.updateToken
+                sessionExpiration = auth.sessionExpiration
+            } catch {
+                print("Failed to refresh session: \(error)")
+            }
+        }
+    }
 
     func restorePreviousSession(completion: @escaping (SessionRestoreResult) -> Void) {
         GIDSignIn.sharedInstance.restorePreviousSignIn { [weak self] user, error in
@@ -128,9 +171,8 @@ class UserSessionManager: ObservableObject {
             }
 
             self.displayName = user.profile?.name
-            self.email = user.profile?.email
+            self.email = email
 
-            // Restore Firebase session
             guard let idToken = user.idToken?.tokenString else {
                 completion(.needsSignIn)
                 return
@@ -149,7 +191,7 @@ class UserSessionManager: ObservableObject {
                     return
                 }
                 self.googleToken = idToken
-                // Backend session init would go here via NetworkManager
+                Task { await self.refreshSessionIfNeeded() }
                 completion(.success)
             }
         }
@@ -161,6 +203,8 @@ class UserSessionManager: ObservableObject {
         googleToken = nil
         sessionToken = nil
         updateToken = nil
+        sessionExpiration = nil
+        deviceToken = ""
         GIDSignIn.sharedInstance.signOut()
         try? Auth.auth().signOut()
     }
@@ -172,4 +216,11 @@ class UserSessionManager: ObservableObject {
         return domain == "cornell.edu" || email == "appstoreappdev@gmail.com"
     }
 
+}
+
+enum SessionRestoreResult {
+    case success
+    case needsSignIn
+    case invalidEmail
+    case error(String)
 }

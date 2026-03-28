@@ -14,8 +14,7 @@ struct ContentView: View {
     var body: some View {
         Group {
             if sessionManager.isAuthenticated {
-                // HomeView() — next step
-                Text("Home")
+                HomeView()
             } else {
                 LoginView()
             }
