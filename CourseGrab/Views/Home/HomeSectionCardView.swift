@@ -20,7 +20,7 @@ struct HomeSectionCardView: View {
         VStack(alignment: .leading, spacing: 8) {
 
             HStack(alignment: .top) {
-                Text("\(section.subjectCode) \(section.courseNum): \(section.title)")
+                Text(section.displayTitle)
                     .font(Constants.Fonts.semibold16)
                     .foregroundStyle(Constants.Colors.black)
                     .multilineTextAlignment(.leading)
@@ -32,7 +32,7 @@ struct HomeSectionCardView: View {
             }
 
             HStack(spacing: 6) {
-                Text(String(section.catalogNum))
+                Text(section.displayCatalogNum)
                     .font(Constants.Fonts.medium14)
                     .foregroundStyle(Constants.Colors.black)
                     .padding(.horizontal, 10)

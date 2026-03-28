@@ -19,7 +19,7 @@ struct SearchCourseCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top) {
-                Text("\(course.subjectCode) \(course.courseNum.formatted(.number.grouping(.never))): \(course.title)")
+                Text(course.displayTitle)
                     .font(Constants.Fonts.semibold16)
                     .foregroundStyle(Constants.Colors.black)
                     .multilineTextAlignment(.leading)

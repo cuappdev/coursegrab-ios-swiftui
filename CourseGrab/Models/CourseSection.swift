@@ -35,4 +35,8 @@ struct CourseSection: Codable, Identifiable {
         let sectionNum = self.section.components(separatedBy: "/")[0]
         return sectionNum.trimmingCharacters(in: .whitespaces)
     }
+    
+    var displayTitle: String {
+        "\(subjectCode) \(String(courseNum)): \(title)"
+    }
 }

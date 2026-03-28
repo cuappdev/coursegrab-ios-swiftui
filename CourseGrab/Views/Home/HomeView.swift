@@ -15,6 +15,7 @@ struct HomeView: View {
     @State private var showSearch = false
     @State private var bannerMessage: String? = nil
     @State private var showBanner: Bool = false
+    @State private var showSettings = false
 
     // MARK: - Body
 
@@ -45,7 +46,7 @@ struct HomeView: View {
                 }
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
-                        // Settings
+                        showSettings = true
                     } label: {
                         Constants.Images.iconSettings
                             .foregroundStyle(.white)
@@ -76,6 +77,11 @@ struct HomeView: View {
                         }
                     }
                 )
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView()
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.hidden)
             }
         }
         .task {

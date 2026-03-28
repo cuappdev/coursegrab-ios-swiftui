@@ -17,7 +17,7 @@ struct SearchDetailCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("\(course.subjectCode) \(course.courseNum): \(course.title)")
+            Text(course.displayTitle)
                 .font(Constants.Fonts.semibold16)
                 .foregroundStyle(Constants.Colors.black)
 
