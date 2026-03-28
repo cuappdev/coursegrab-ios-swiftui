@@ -49,7 +49,7 @@ struct HomeSectionCardView: View {
                     .clipShape(Capsule())
             }
 
-            Text(section.section)
+            Text(section.getSectionByTimezone())
                 .font(Constants.Fonts.medium14)
                 .foregroundStyle(Constants.Colors.gray)
 

@@ -23,7 +23,7 @@ struct SearchDetailSectionRow: View {
                 .frame(width: 16, height: 16)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(section.section)
+                Text(section.getSectionByTimezone())
                     .font(Constants.Fonts.semibold14)
                     .foregroundStyle(Constants.Colors.black)
 

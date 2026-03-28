@@ -39,4 +39,25 @@ struct CourseSection: Codable, Identifiable {
     var displayTitle: String {
         "\(subjectCode) \(String(courseNum)): \(title)"
     }
+    
+    func getSectionByTimezone() -> String {
+        if let index = section.lastIndex(of: " ") {
+            let timeIndexStart = section.index(after: index)
+            let sectionString = String(section[..<timeIndexStart])
+            let timeString = String(section[timeIndexStart...])
+
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "h:mma"
+            dateFormatter.timeZone = TimeZone(identifier: "America/New_York")
+            guard let date = dateFormatter.date(from: timeString) else {
+                return section
+            }
+            if UserDefaults.standard.bool(forKey: "localTimezoneEnabled") {
+                dateFormatter.timeZone = TimeZone.current
+            }
+            dateFormatter.dateFormat = "h:mma"
+            return sectionString + dateFormatter.string(from: date)
+        }
+        return section
+    }
 }

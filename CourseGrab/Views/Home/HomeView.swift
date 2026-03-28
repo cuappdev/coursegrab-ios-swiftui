@@ -52,6 +52,7 @@ struct HomeView: View {
                             .foregroundStyle(.white)
                     }
                 }
+                .sharedBackgroundVisibility(.hidden)
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showSearch = true
@@ -60,6 +61,7 @@ struct HomeView: View {
                             .foregroundStyle(.white)
                     }
                 }
+                .sharedBackgroundVisibility(.hidden)
             }
             .toolbarBackground(.black, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
@@ -82,6 +84,7 @@ struct HomeView: View {
                 SettingsView()
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.hidden)
+                    .presentationBackground(Constants.Colors.white)
             }
         }
         .task {

@@ -21,7 +21,7 @@ struct SearchTrackedSectionRow: View {
             StatusBadgeView(status: section.status)
                 .frame(width: 16, height: 16)
 
-            Text(section.section)
+            Text(section.getSectionByTimezone())
                 .font(Constants.Fonts.semibold14)
                 .foregroundStyle(Constants.Colors.black)
                 .lineLimit(1)

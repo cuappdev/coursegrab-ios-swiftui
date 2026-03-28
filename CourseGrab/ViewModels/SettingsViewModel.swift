@@ -41,10 +41,22 @@ extension SettingsView {
         func toggleNotifications(_ enabled: Bool) {
             Task {
                 let settings = await UNUserNotificationCenter.current().notificationSettings()
-                if settings.authorizationStatus == .authorized {
+                switch settings.authorizationStatus {
+                case .authorized:
                     UserDefaults.standard.set(enabled, forKey: "areNotificationsEnabled")
                     try? await NetworkManager.shared.enableNotifications(enabled: enabled)
-                } else {
+                case .notDetermined:
+                    // Ask for permission first
+                    let granted = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound])
+                    if granted == true {
+                        await UIApplication.shared.registerForRemoteNotifications()
+                        UserDefaults.standard.set(true, forKey: "areNotificationsEnabled")
+                        notificationsEnabled = true
+                    } else {
+                        notificationsEnabled = false
+                    }
+                default:
+                    // Denied — open settings
                     notificationsEnabled = false
                     if let url = URL(string: UIApplication.openSettingsURLString) {
                         await UIApplication.shared.open(url)
@@ -52,7 +64,7 @@ extension SettingsView {
                 }
             }
         }
-
+        
         func toggleLocalTimezone(_ enabled: Bool) {
             UserDefaults.standard.set(enabled, forKey: "localTimezoneEnabled")
         }
