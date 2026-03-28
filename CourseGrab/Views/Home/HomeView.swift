@@ -82,7 +82,7 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
-                    .presentationDetents([.medium])
+                    .presentationDetents([.fraction(0.44)])
                     .presentationDragIndicator(.hidden)
                     .presentationBackground(Constants.Colors.white)
             }
@@ -103,15 +103,19 @@ struct HomeView: View {
             
             Spacer()
         } else if viewModel.hasError {
-            Spacer()
-            
-            HomeStateView(
-                title: "Could Not Connect to Server",
-                subtitle: "Pull down to refresh",
-                status: .closed
-            )
-            
-            Spacer()
+            VStack {
+                Spacer()
+
+                HomeStateView(
+                    title: "Could Not Connect to Server",
+                    subtitle: "Pull down to refresh",
+                    status: .closed
+                )
+
+                Spacer()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.top, 24)
         } else if viewModel.isEmpty {
             Spacer()
             
@@ -124,7 +128,7 @@ struct HomeView: View {
             Spacer()
         } else {
             ScrollView {
-                LazyVStack(spacing: 0, pinnedViews: .sectionHeaders) {
+                LazyVStack(spacing: 0) {
                     if !viewModel.availableSections.isEmpty {
                         Section {
                             ForEach(viewModel.availableSections) { section in
