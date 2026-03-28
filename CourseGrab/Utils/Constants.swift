@@ -55,11 +55,11 @@ struct Constants {
 
     enum Images {
         // Icons
-        static let iconArrow = Image("icon-arrow")
-        static let iconBack = Image("icon-back")
+        static let iconArrow = Image("icon-arrow").renderingMode(.template)
+        static let iconBack = Image("icon-back").renderingMode(.template)
         static let iconPopularity = Image("icon-popularity")
-        static let iconSearch = Image("icon-search")
-        static let iconSettings = Image("icon-settings")
+        static let iconSearch = Image("icon-search").renderingMode(.template)
+        static let iconSettings = Image("icon-settings").renderingMode(.template)
 
         // Logos
         static let appdevLogoWhite = Image("appdev-logo-white")

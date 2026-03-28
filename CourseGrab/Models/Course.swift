@@ -8,7 +8,7 @@
 import Foundation
 
 struct Course: Codable, Identifiable {
-    var id: Int { courseNum }
+    var id: String { "\(subjectCode)\(courseNum)" }
     let courseNum: Int
     let subjectCode: String
     let sections: [CourseSection]
@@ -16,5 +16,9 @@ struct Course: Codable, Identifiable {
 
     var instructors: [String] {
         Array(Set(sections.reduce(into: []) { $0 += $1.instructors }))
+    }
+    
+    var displayTitle: String {
+        "\(subjectCode) \(String(courseNum)): \(title)"
     }
 }

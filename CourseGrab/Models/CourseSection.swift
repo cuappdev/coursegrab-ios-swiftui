@@ -26,4 +26,8 @@ struct CourseSection: Codable, Identifiable {
     let status: Status
     let subjectCode: String
     let title: String
+    
+    var displayCatalogNum: String {
+        String(catalogNum)
+    }
 }
