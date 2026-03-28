@@ -24,8 +24,11 @@ struct HomeSectionCardView: View {
                     .font(Constants.Fonts.semibold16)
                     .foregroundStyle(Constants.Colors.black)
                     .multilineTextAlignment(.leading)
+                
                 Spacer()
+                
                 StatusBadgeView(status: section.status)
+                    .frame(width: 16, height: 16)
             }
 
             HStack(spacing: 6) {
@@ -52,8 +55,10 @@ struct HomeSectionCardView: View {
 
             HStack(spacing: 4) {
                 Constants.Images.iconPopularity
-                    .renderingMode(.template)
-                    .foregroundStyle(Constants.Colors.mediumGray)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 16, height: 12)
+                
                 Text("\(section.numTracking) tracking")
                     .font(Constants.Fonts.medium12)
                     .foregroundStyle(Constants.Colors.mediumGray)
