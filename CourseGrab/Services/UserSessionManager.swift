@@ -141,6 +141,7 @@ class UserSessionManager: ObservableObject {
                 sessionExpiration = auth.sessionExpiration
             } catch {
                 print("Failed to refresh session: \(error)")
+                await MainActor.run { logout() }
             }
         }
     }
