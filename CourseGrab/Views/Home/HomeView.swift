@@ -103,18 +103,26 @@ struct HomeView: View {
             
             Spacer()
         } else if viewModel.hasError {
-            VStack {
-                Spacer()
+            GeometryReader { geo in
+                ScrollView {
+                    VStack {
+                        Spacer(minLength: 0)
 
-                HomeStateView(
-                    title: "Could Not Connect to Server",
-                    subtitle: "Pull down to refresh",
-                    status: .closed
-                )
+                        HomeStateView(
+                            title: "Could Not Connect to Server",
+                            subtitle: "Pull down to refresh",
+                            status: .closed
+                        )
 
-                Spacer()
+                        Spacer(minLength: 0)
+                    }
+                    .frame(minWidth: geo.size.width)
+                    .frame(minHeight: geo.size.height)
+                }
+                .refreshable {
+                    await viewModel.fetchTrackedSections()
+                }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.top, 24)
         } else if viewModel.isEmpty {
             Spacer()
