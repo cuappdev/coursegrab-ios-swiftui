@@ -80,7 +80,6 @@ struct SearchView: View {
                         .foregroundStyle(.white)
                 }
             }
-            .sharedBackgroundVisibility(.hidden)
             ToolbarItem(placement: .principal) {
                 TextField("", text: $viewModel.searchText, prompt:
                     Text("Search for a course")
@@ -91,11 +90,10 @@ struct SearchView: View {
                 .tint(.white)
                 .autocorrectionDisabled()
                 .frame(width: UIScreen.main.bounds.width - 80)
-                .onChange(of: viewModel.searchText) {
+                .onChange(of: viewModel.searchText) { _ in
                     viewModel.onSearchTextChanged()
                 }
             }
-            .sharedBackgroundVisibility(.hidden)
         }
         .toolbarBackground(.black, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
