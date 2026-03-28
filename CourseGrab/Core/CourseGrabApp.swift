@@ -7,6 +7,7 @@
 
 import Firebase
 import GoogleSignIn
+import OSLog
 import SwiftUI
 
 @main
@@ -17,14 +18,24 @@ struct CourseGrabApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .preferredColorScheme(.light)
+                .dynamicTypeSize(.medium ... .medium)
+                .environment(\.legibilityWeight, .regular)
         }
     }
 }
 
 class AppDelegate: NSObject, UIApplicationDelegate {
 
-    func application(_ application: UIApplication,
-                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+    private let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "com.cornellappdev.coursegrab",
+        category: "AppDelegate"
+    )
+
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
         FirebaseApp.configure()
         GIDSignIn.sharedInstance.configuration = GIDConfiguration(
             clientID: CourseGrabEnvironment.Keys.googleClientID
@@ -32,9 +43,39 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         return true
     }
 
-    func application(_ app: UIApplication, open url: URL,
-                     options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+    func application(
+        _ app: UIApplication,
+        open url: URL,
+        options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+    ) -> Bool {
         GIDSignIn.sharedInstance.handle(url)
+    }
+
+    // MARK: - APNs Device Token Registration
+
+    /// Called by iOS after a successful call to `registerForRemoteNotifications()`.
+    /// Converts the raw token Data into a hex string and forwards it to the backend.
+    func application(
+        _ application: UIApplication,
+        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+    ) {
+        let tokenString = deviceToken
+            .map { String(format: "%02x", $0) }
+            .joined()
+
+        logger.info("APNs device token registered: \(tokenString)")
+
+        Task {
+            await UserSessionManager.shared.updateDeviceToken(tokenString)
+        }
+    }
+
+    /// Called when APNs token registration fails (e.g. on the Simulator or with no network).
+    func application(
+        _ application: UIApplication,
+        didFailToRegisterForRemoteNotificationsWithError error: Error
+    ) {
+        logger.error("Failed to register for remote notifications: \(error.localizedDescription)")
     }
 
 }

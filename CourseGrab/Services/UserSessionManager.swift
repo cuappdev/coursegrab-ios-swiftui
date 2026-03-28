@@ -192,7 +192,9 @@ class UserSessionManager: ObservableObject {
                     return
                 }
                 self.googleToken = idToken
-                Task { await self.refreshSessionIfNeeded() }
+                Task {
+                    await self.refreshSessionIfNeeded()
+                }
                 completion(.success)
             }
         }
@@ -208,6 +210,29 @@ class UserSessionManager: ObservableObject {
         deviceToken = ""
         GIDSignIn.sharedInstance.signOut()
         try? Auth.auth().signOut()
+    }
+
+    // MARK: - Device Token
+
+    /// Called from AppDelegate whenever iOS issues or rotates the APNs device token.
+    /// Persists the token locally and — if a session is already active — sends it to
+    /// the backend immediately so push notifications stay functional after token rotation.
+    @MainActor
+    func updateDeviceToken(_ token: String) async {
+        // No-op if the token hasn't actually changed, to avoid redundant network calls.
+        guard token != deviceToken else { return }
+
+        deviceToken = token
+
+        // Only send to the backend if the user is already authenticated.
+        // If not, the token will be included in the next `initializeSession()` call.
+        guard isAuthenticated, sessionToken != nil else { return }
+
+        do {
+            try await NetworkManager.shared.sendDeviceToken(deviceToken: token)
+        } catch {
+            print("Failed to send device token to backend: \(error)")
+        }
     }
 
     // MARK: - Helpers
