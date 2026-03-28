@@ -49,7 +49,7 @@ struct SettingsView: View {
 
                         Toggle("", isOn: $viewModel.notificationsEnabled)
                             .labelsHidden()
-                            .onChange(of: viewModel.notificationsEnabled) { _, newValue in
+                            .onChange(of: viewModel.notificationsEnabled) { newValue in
                                 viewModel.toggleNotifications(newValue)
                             }
                     }
@@ -63,7 +63,7 @@ struct SettingsView: View {
 
                         Toggle("", isOn: $viewModel.localTimezoneEnabled)
                             .labelsHidden()
-                            .onChange(of: viewModel.localTimezoneEnabled) { _, newValue in
+                            .onChange(of: viewModel.localTimezoneEnabled) { newValue in
                                 viewModel.toggleLocalTimezone(newValue)
                             }
                     }
