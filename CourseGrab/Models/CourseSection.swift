@@ -30,4 +30,9 @@ struct CourseSection: Codable, Identifiable {
     var displayCatalogNum: String {
         String(catalogNum)
     }
+    
+    func getSectionNum() -> String {
+        let sectionNum = self.section.components(separatedBy: "/")[0]
+        return sectionNum.trimmingCharacters(in: .whitespaces)
+    }
 }
