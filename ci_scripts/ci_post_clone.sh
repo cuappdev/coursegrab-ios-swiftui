@@ -10,5 +10,5 @@ echo "Downloading Secrets"
 brew install wget
 cd $CI_PRIMARY_REPOSITORY_PATH/ci_scripts
 mkdir ../CourseGrabSecrets
-wget -O ../CourseGrabSecrets/Keys.plist "$KEYS"
+wget -O ../CourseGrabSecrets/Keys.xcconfig "$KEYS"
 wget -O ../CourseGrabSecrets/GoogleService-Info.plist "$GOOGLE_PLIST"
