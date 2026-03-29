@@ -49,7 +49,7 @@ extension SettingsView {
                     // Ask for permission first
                     let granted = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound])
                     if granted == true {
-                        await UIApplication.shared.registerForRemoteNotifications()
+                        UIApplication.shared.registerForRemoteNotifications()
                         UserDefaults.standard.set(true, forKey: "areNotificationsEnabled")
                         notificationsEnabled = true
                     } else {
