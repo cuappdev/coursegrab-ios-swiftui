@@ -92,6 +92,7 @@ class UserSessionManager: ObservableObject {
     // MARK: - Private
 
     private var authStateHandle: AuthStateDidChangeListenerHandle?
+    private var sessionInitTask: Task<Void, Never>?
 
     // MARK: - Init
 
@@ -118,17 +119,33 @@ class UserSessionManager: ObservableObject {
 
     func initializeSession() async {
         guard let googleToken else { return }
-        do {
-            let auth = try await NetworkManager.shared.initializeSession(googleToken: googleToken)
-            sessionToken = auth.sessionToken
-            updateToken = auth.updateToken
-            sessionExpiration = auth.sessionExpiration
-        } catch {
-            print("Failed to initialize session: \(error)")
+        if let task = sessionInitTask {
+            await task.value
+            return
         }
+        sessionInitTask = Task { [weak self] in
+            guard let self else { return }
+            self.debugSessionState("initializeSession (start)")
+            do {
+                let auth = try await NetworkManager.shared.initializeSession(googleToken: googleToken)
+                self.sessionToken = auth.sessionToken
+                self.updateToken = auth.updateToken
+                self.sessionExpiration = auth.sessionExpiration
+                self.debugSessionState("initializeSession (success)")
+            } catch {
+                print("Failed to initialize session: \(error)")
+                self.debugSessionState("initializeSession (failed)")
+                if error.invalidatesUserSession {
+                    await MainActor.run { self.logout() }
+                }
+            }
+            self.sessionInitTask = nil
+        }
+        await sessionInitTask?.value
     }
 
     func refreshSessionIfNeeded() async {
+        debugSessionState("refreshSessionIfNeeded (start)")
         guard let expiration = sessionExpiration else {
             await initializeSession()
             return
@@ -139,14 +156,17 @@ class UserSessionManager: ObservableObject {
                 sessionToken = auth.sessionToken
                 updateToken = auth.updateToken
                 sessionExpiration = auth.sessionExpiration
+                debugSessionState("refreshSessionIfNeeded (refreshed)")
             } catch {
                 print("Failed to refresh session: \(error)")
+                debugSessionState("refreshSessionIfNeeded (refresh failed)")
                 await MainActor.run { logout() }
             }
         }
     }
 
     func restorePreviousSession(completion: @escaping (SessionRestoreResult) -> Void) {
+        debugSessionState("restorePreviousSession (start)")
         GIDSignIn.sharedInstance.restorePreviousSignIn { [weak self] user, error in
             guard let self else {
                 completion(.error("Session manager deallocated"))
@@ -155,11 +175,13 @@ class UserSessionManager: ObservableObject {
 
             if let error {
                 print("Failed to restore Google Sign-In: \(error.localizedDescription)")
+                self.debugSessionState("restorePreviousSession (google restore failed)")
                 completion(.needsSignIn)
                 return
             }
 
             guard let user else {
+                self.debugSessionState("restorePreviousSession (no user)")
                 completion(.needsSignIn)
                 return
             }
@@ -175,6 +197,7 @@ class UserSessionManager: ObservableObject {
             self.email = email
 
             guard let idToken = user.idToken?.tokenString else {
+                self.debugSessionState("restorePreviousSession (missing idToken)")
                 completion(.needsSignIn)
                 return
             }
@@ -188,6 +211,7 @@ class UserSessionManager: ObservableObject {
                 guard let self else { return }
                 if let error {
                     print("Firebase sign-in failed: \(error.localizedDescription)")
+                    self.debugSessionState("restorePreviousSession (firebase sign-in failed)")
                     completion(.needsSignIn)
                     return
                 }
@@ -195,6 +219,7 @@ class UserSessionManager: ObservableObject {
                 Task {
                     await self.refreshSessionIfNeeded()
                 }
+                self.debugSessionState("restorePreviousSession (success)")
                 completion(.success)
             }
         }
@@ -240,6 +265,24 @@ class UserSessionManager: ObservableObject {
     private func isValidCornellEmail(_ email: String) -> Bool {
         let domain = email.split(separator: "@").last
         return domain == "cornell.edu" || email == "appstoreappdev@gmail.com"
+    }
+
+    private func debugSessionState(_ label: String) {
+        let now = Date()
+        let exp = sessionExpiration
+        let isExpired = exp.map { $0 <= now } ?? true
+
+        print(
+            """
+            [SessionDebug] \(label)
+              isAuthenticated=\(isAuthenticated)
+              hasGoogleToken=\(googleToken != nil)
+              hasSessionToken=\(sessionToken != nil)
+              hasUpdateToken=\(updateToken != nil)
+              expiration=\(exp?.description ?? "nil")
+              isExpired=\(isExpired)
+            """
+        )
     }
 
 }
