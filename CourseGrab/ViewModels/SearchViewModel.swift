@@ -53,6 +53,9 @@ extension SearchView {
                 hasSearched = true
             } catch {
                 print("Search failed: \(error)")
+                if error.invalidatesUserSession {
+                    UserSessionManager.shared.logout()
+                }
             }
             isLoading = false
         }
@@ -63,6 +66,9 @@ extension SearchView {
                 updateSection(updated)
             } catch {
                 print("Failed to untrack: \(error)")
+                if error.invalidatesUserSession {
+                    UserSessionManager.shared.logout()
+                }
             }
         }
 
@@ -72,6 +78,9 @@ extension SearchView {
                 updateSection(updated)
             } catch {
                 print("Failed to track: \(error)")
+                if error.invalidatesUserSession {
+                    UserSessionManager.shared.logout()
+                }
             }
         }
 

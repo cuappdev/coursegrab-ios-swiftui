@@ -33,11 +33,20 @@ extension HomeView {
             hasError = false
             do {
                 await UserSessionManager.shared.refreshSessionIfNeeded()
+                guard UserSessionManager.shared.isAuthenticated else {
+                    isLoading = false
+                    return
+                }
                 let sections = try await NetworkManager.shared.getAllTrackedSections()
                 availableSections = sections.filter { $0.status == Status.open }
                 awaitingSections = sections.filter { $0.status != Status.open }
             } catch {
-                hasError = true
+                print("fetchTrackedSections failed: \(error)")
+                if error.invalidatesUserSession {
+                    UserSessionManager.shared.logout()
+                } else {
+                    hasError = true
+                }
             }
             isLoading = false
         }
@@ -52,6 +61,9 @@ extension HomeView {
                 }
             } catch {
                 print("Failed to untrack: \(error)")
+                if error.invalidatesUserSession {
+                    UserSessionManager.shared.logout()
+                }
             }
         }
 

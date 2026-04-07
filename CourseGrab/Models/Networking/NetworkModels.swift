@@ -9,9 +9,54 @@ import Foundation
 
 // MARK: - Response Wrappers
 
-struct Response<T: Codable>: Codable {
-    let data: T
+/// Backend responses are wrapped in an envelope like:
+/// - success: true  -> { "data": <T>, "success": true, ... }
+/// - success: false -> { "data": { "errors": [String] }, "success": false, ... }
+///
+/// This model decodes both cases so we can surface a real error instead of failing JSON decoding.
+struct APIResponse<T: Codable>: Codable {
+    let data: T?
     let success: Bool
+    let timestamp: Int?
+    let errors: [String]?
+
+    private struct ErrorPayload: Codable {
+        let errors: [String]
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case data
+        case success
+        case timestamp
+    }
+
+    init(data: T?, success: Bool, timestamp: Int?, errors: [String]?) {
+        self.data = data
+        self.success = success
+        self.timestamp = timestamp
+        self.errors = errors
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        success = try container.decode(Bool.self, forKey: .success)
+        timestamp = try container.decodeIfPresent(Int.self, forKey: .timestamp)
+
+        if let decodedData = try? container.decode(T.self, forKey: .data) {
+            data = decodedData
+            errors = nil
+            return
+        }
+
+        if let decodedError = try? container.decode(ErrorPayload.self, forKey: .data) {
+            data = nil
+            errors = decodedError.errors
+            return
+        }
+
+        data = nil
+        errors = nil
+    }
 }
 
 struct Sections: Codable {
