@@ -185,10 +185,22 @@ class NetworkManager: APIClient {
 
     func updateSession() async throws -> SessionAuthorization {
         let url = try constructURL(endpoint: "/session/update/")
-        let response: APIResponse<SessionAuthorization> = try await post(url: url)
-        try requireSuccess(response, url: url)
-        guard let data = response.data else { throw APIError(url: url.absoluteString, errors: response.errors ?? ["Missing response data"]) }
-        return data
+        // Backend expects the *update* token on this endpoint, not the session token.
+        let request = try createRequest(url: url, method: "POST", useUpdateToken: true)
+        let (data, response) = try await perform(request: request)
+        try handleResponse(data: data, response: response)
+        let decoded: APIResponse<SessionAuthorization>
+        do {
+            decoded = try jsonDecoder.decode(APIResponse<SessionAuthorization>.self, from: data)
+        } catch {
+            logDecodingFailure(expectedType: APIResponse<SessionAuthorization>.self, request: request, data: data, error: error)
+            throw error
+        }
+        try requireSuccess(decoded, url: url)
+        guard let sessionData = decoded.data else {
+            throw APIError(url: url.absoluteString, errors: decoded.errors ?? ["Missing response data"])
+        }
+        return sessionData
     }
 
     // MARK: - Private Helpers

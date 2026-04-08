@@ -92,7 +92,7 @@ struct SettingsView: View {
 
                     // Account + Sign out
                     HStack {
-                        Text(UserSessionManager.shared.email ?? "")
+                        Text(viewModel.accountEmail)
                             .font(Constants.Fonts.semibold16)
                             .foregroundStyle(Constants.Colors.darkGray)
 
