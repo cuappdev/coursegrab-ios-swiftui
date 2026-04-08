@@ -123,15 +123,17 @@ struct HomeView: View {
             }
             .padding(.top, 24)
         } else if viewModel.isEmpty {
-            Spacer()
-            
-            HomeStateView(
-                title: "No Courses Currently Tracked",
-                subtitle: "Tap the search icon to start adding courses",
-                status: .open
-            )
-            
-            Spacer()
+            VStack{
+                Spacer()
+                
+                HomeStateView(
+                    title: "No Courses Currently Tracked",
+                    subtitle: "Tap the search icon to start adding courses",
+                    status: .open
+                )
+                
+                Spacer()
+            }
         } else {
             ScrollView {
                 LazyVStack(spacing: 0) {

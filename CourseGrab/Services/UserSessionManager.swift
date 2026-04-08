@@ -155,6 +155,13 @@ class UserSessionManager: ObservableObject {
 
     func refreshSessionIfNeeded() async {
         debugSessionState("refreshSessionIfNeeded (start)")
+        // If Firebase thinks we're signed in but we don't have the Google token needed
+        // to initialize/refresh backend session tokens, force a logout so the UI returns
+        // to the login screen instead of getting stuck in an unauthenticated "Home" state.
+        if isAuthenticated, googleToken == nil {
+            await MainActor.run { logout() }
+            return
+        }
         guard let expiration = sessionExpiration else {
             await initializeSession()
             return
@@ -185,12 +192,18 @@ class UserSessionManager: ObservableObject {
             if let error {
                 print("Failed to restore Google Sign-In: \(error.localizedDescription)")
                 self.debugSessionState("restorePreviousSession (google restore failed)")
+                Task { @MainActor in
+                    self.logout()
+                }
                 completion(.needsSignIn)
                 return
             }
 
             guard let user else {
                 self.debugSessionState("restorePreviousSession (no user)")
+                Task { @MainActor in
+                    self.logout()
+                }
                 completion(.needsSignIn)
                 return
             }
@@ -207,6 +220,9 @@ class UserSessionManager: ObservableObject {
 
             guard let idToken = user.idToken?.tokenString else {
                 self.debugSessionState("restorePreviousSession (missing idToken)")
+                Task { @MainActor in
+                    self.logout()
+                }
                 completion(.needsSignIn)
                 return
             }
@@ -221,6 +237,9 @@ class UserSessionManager: ObservableObject {
                 if let error {
                     print("Firebase sign-in failed: \(error.localizedDescription)")
                     self.debugSessionState("restorePreviousSession (firebase sign-in failed)")
+                    Task { @MainActor in
+                        self.logout()
+                    }
                     completion(.needsSignIn)
                     return
                 }
