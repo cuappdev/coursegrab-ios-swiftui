@@ -48,7 +48,16 @@ extension SettingsView {
 
         func refreshNotificationStatus() async {
             let settings = await UNUserNotificationCenter.current().notificationSettings()
-            notificationsEnabled = settings.authorizationStatus == .authorized
+            let hasPermission: Bool = {
+                switch settings.authorizationStatus {
+                case .authorized, .provisional:
+                    return true
+                default:
+                    return false
+                }
+            }()
+
+            notificationsEnabled = hasPermission
                 && UserDefaults.standard.bool(forKey: "areNotificationsEnabled")
         }
 
@@ -56,9 +65,12 @@ extension SettingsView {
             Task {
                 let settings = await UNUserNotificationCenter.current().notificationSettings()
                 switch settings.authorizationStatus {
-                case .authorized:
+                case .authorized, .provisional:
                     UserDefaults.standard.set(enabled, forKey: "areNotificationsEnabled")
                     try? await NetworkManager.shared.enableNotifications(enabled: enabled)
+                    if enabled {
+                        UIApplication.shared.registerForRemoteNotifications()
+                    }
 
                 case .notDetermined:
                     let granted = try? await UNUserNotificationCenter.current()
@@ -68,6 +80,7 @@ extension SettingsView {
                         UIApplication.shared.registerForRemoteNotifications()
                         UserDefaults.standard.set(true, forKey: "areNotificationsEnabled")
                         notificationsEnabled = true
+                        try? await NetworkManager.shared.enableNotifications(enabled: true)
                     } else {
                         notificationsEnabled = false
                     }
