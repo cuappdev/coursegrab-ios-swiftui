@@ -93,6 +93,7 @@ class UserSessionManager: ObservableObject {
 
     private var authStateHandle: AuthStateDidChangeListenerHandle?
     private var sessionInitTask: Task<Void, Never>?
+    private var lastSentDeviceToken: String?
 
     // MARK: - Init
 
@@ -103,6 +104,7 @@ class UserSessionManager: ObservableObject {
         self.sessionToken = KeychainManager.shared.get(forKey: "sessionToken")
         self.updateToken = KeychainManager.shared.get(forKey: "updateToken")
         self.deviceToken = KeychainManager.shared.get(forKey: "deviceToken") ?? ""
+        self.lastSentDeviceToken = KeychainManager.shared.get(forKey: "lastSentDeviceToken")
         if let expStr = KeychainManager.shared.get(forKey: "sessionExpiration") {
             self.sessionExpiration = ISO8601DateFormatter().date(from: expStr)
         }
@@ -119,6 +121,13 @@ class UserSessionManager: ObservableObject {
                     if self.displayName?.isEmpty ?? true, let name = user.displayName, !name.isEmpty {
                         self.displayName = name
                     }
+                }
+            }
+
+            // If APNs gave us a token before auth/session was ready, flush it now.
+            if user != nil {
+                Task { [weak self] in
+                    await self?.syncDeviceTokenToBackendIfNeeded()
                 }
             }
         }
@@ -141,6 +150,7 @@ class UserSessionManager: ObservableObject {
                 self.updateToken = auth.updateToken
                 self.sessionExpiration = auth.sessionExpiration
                 self.debugSessionState("initializeSession (success)")
+                await self.syncDeviceTokenToBackendIfNeeded()
             } catch {
                 print("Failed to initialize session: \(error)")
                 self.debugSessionState("initializeSession (failed)")
@@ -239,6 +249,8 @@ class UserSessionManager: ObservableObject {
         updateToken = nil
         sessionExpiration = nil
         deviceToken = ""
+        lastSentDeviceToken = nil
+        KeychainManager.shared.delete(forKey: "lastSentDeviceToken")
         GIDSignIn.sharedInstance.signOut()
         try? Auth.auth().signOut()
     }
@@ -250,6 +262,16 @@ class UserSessionManager: ObservableObject {
     func debugForceExpireSession() {
         sessionExpiration = .distantPast
     }
+<<<<<<< Updated upstream
+=======
+
+    @MainActor
+    func debugForceResendDeviceToken() async {
+        lastSentDeviceToken = nil
+        KeychainManager.shared.delete(forKey: "lastSentDeviceToken")
+        await syncDeviceTokenToBackendIfNeeded()
+    }
+>>>>>>> Stashed changes
 #endif
 
     // MARK: - Device Token
@@ -263,13 +285,20 @@ class UserSessionManager: ObservableObject {
         guard token != deviceToken else { return }
 
         deviceToken = token
+        await syncDeviceTokenToBackendIfNeeded()
+    }
 
-        // Only send to the backend if the user is already authenticated.
-        // If not, the token will be included in the next `initializeSession()` call.
+    @MainActor
+    func syncDeviceTokenToBackendIfNeeded() async {
+        guard !deviceToken.isEmpty else { return }
         guard isAuthenticated, sessionToken != nil else { return }
+        guard lastSentDeviceToken != deviceToken else { return }
 
         do {
-            try await NetworkManager.shared.sendDeviceToken(deviceToken: token)
+            try await NetworkManager.shared.sendDeviceToken(deviceToken: deviceToken)
+            lastSentDeviceToken = deviceToken
+            KeychainManager.shared.save(deviceToken, forKey: "lastSentDeviceToken")
+            print("[NetworkDebug] Device token sent successfully.")
         } catch {
             print("Failed to send device token to backend: \(error)")
         }

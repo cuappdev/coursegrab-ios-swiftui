@@ -111,9 +111,13 @@ struct SettingsView: View {
 #if DEBUG
                     Button {
                         Task {
+<<<<<<< Updated upstream
                             await MainActor.run {
                                 UserSessionManager.shared.debugForceExpireSession()
                             }
+=======
+                            await MainActor.run { UserSessionManager.shared.debugForceExpireSession() }
+>>>>>>> Stashed changes
                             await UserSessionManager.shared.refreshSessionIfNeeded()
                         }
                     } label: {
@@ -121,6 +125,17 @@ struct SettingsView: View {
                             .font(Constants.Fonts.semibold16)
                             .foregroundStyle(.orange)
                     }
+<<<<<<< Updated upstream
+=======
+
+                    Button {
+                        Task { await UserSessionManager.shared.debugForceResendDeviceToken() }
+                    } label: {
+                        Text("Resend Device Token (Debug)")
+                            .font(Constants.Fonts.semibold16)
+                            .foregroundStyle(.orange)
+                    }
+>>>>>>> Stashed changes
 #endif
 
                     HStack(alignment: .center, spacing: 0) {

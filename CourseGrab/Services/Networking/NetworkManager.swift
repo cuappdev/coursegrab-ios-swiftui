@@ -166,7 +166,20 @@ class NetworkManager: APIClient {
     func sendDeviceToken(deviceToken: String) async throws {
         let url = try constructURL(endpoint: "/users/device-token/")
         let body = DeviceTokenBody(deviceToken: deviceToken)
-        try await post(url: url, body: body)
+        let requestData = try jsonEncoder.encode(body)
+        let request = try createRequest(url: url, method: "POST", body: requestData)
+        let (data, response) = try await perform(request: request)
+        try handleResponse(data: data, response: response)
+
+#if DEBUG
+        if !data.isEmpty {
+            let bodyString = String(data: data, encoding: .utf8) ?? "<non-utf8 body, \(data.count) bytes>"
+            let truncated = bodyString.count > 4000 ? String(bodyString.prefix(4000)) + "…(truncated)" : bodyString
+            print("[NetworkDebug] /users/device-token/ JSON: \(truncated)")
+        } else {
+            print("[NetworkDebug] /users/device-token/ response body was empty (HTTP success).")
+        }
+#endif
     }
     
     func initializeSession(googleToken: String) async throws -> SessionAuthorization {
@@ -228,6 +241,15 @@ class NetworkManager: APIClient {
             } else {
                 logger.info("\(request.httpMethod ?? "") \(request.url?.absoluteString ?? "") (non-HTTP response)")
             }
+
+#if DEBUG
+            if let url = request.url, shouldLogResponseBody(url), !data.isEmpty {
+                let bodyString = String(data: data, encoding: .utf8) ?? "<non-utf8 body, \(data.count) bytes>"
+                let truncated = bodyString.count > 4000 ? String(bodyString.prefix(4000)) + "…(truncated)" : bodyString
+                logger.info("Response body for \(url.absoluteString): \(truncated)")
+                print("[NetworkDebug] Response body for \(url.absoluteString): \(truncated)")
+            }
+#endif
             return (data, response)
         } catch {
             logRequestFailure(request, error: error)
@@ -288,5 +310,15 @@ class NetworkManager: APIClient {
             throw APIError(url: url.absoluteString, errors: response.errors ?? ["Request failed"])
         }
     }
+
+#if DEBUG
+    /// Avoid logging all responses (can be large / noisy). Keep this scoped to endpoints
+    /// where seeing the raw JSON is useful during development.
+    private func shouldLogResponseBody(_ url: URL) -> Bool {
+        let path = url.path
+        return path.contains("/api/session/update/")
+            || path.contains("/api/users/device-token/")
+    }
+#endif
 
 }

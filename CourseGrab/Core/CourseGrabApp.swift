@@ -9,6 +9,7 @@ import Firebase
 import GoogleSignIn
 import OSLog
 import SwiftUI
+import UserNotifications
 
 @main
 struct CourseGrabApp: App {
@@ -40,6 +41,17 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         GIDSignIn.sharedInstance.configuration = GIDConfiguration(
             clientID: CourseGrabEnvironment.Keys.googleClientID
         )
+
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            switch settings.authorizationStatus {
+            case .authorized, .provisional, .ephemeral:
+                DispatchQueue.main.async {
+                    application.registerForRemoteNotifications()
+                }
+            default:
+                break
+            }
+        }
         return true
     }
 
