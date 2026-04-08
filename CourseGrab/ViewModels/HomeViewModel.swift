@@ -31,12 +31,18 @@ extension HomeView {
         func fetchTrackedSections() async {
             isLoading = true
             hasError = false
+            defer { isLoading = false }
+
             do {
-                await UserSessionManager.shared.refreshSessionIfNeeded()
-                guard UserSessionManager.shared.isAuthenticated else {
-                    isLoading = false
-                    return
+                let session = UserSessionManager.shared
+                guard session.isAuthenticated, session.sessionToken != nil else { return }
+
+                // Avoid refreshing immediately after Firebase restores auth but Google restore failed
+                // (e.g. simulator/fresh install -> no Google credentials in keychain).
+                if session.googleToken != nil {
+                    await session.refreshSessionIfNeeded()
                 }
+
                 let sections = try await NetworkManager.shared.getAllTrackedSections()
                 availableSections = sections.filter { $0.status == Status.open }
                 awaitingSections = sections.filter { $0.status != Status.open }
@@ -48,7 +54,6 @@ extension HomeView {
                     hasError = true
                 }
             }
-            isLoading = false
         }
 
         func untrack(section: CourseSection) async {
