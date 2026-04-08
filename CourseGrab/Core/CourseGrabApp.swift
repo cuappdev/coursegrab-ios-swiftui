@@ -9,6 +9,7 @@ import Firebase
 import GoogleSignIn
 import OSLog
 import SwiftUI
+import UserNotifications
 
 @main
 struct CourseGrabApp: App {
@@ -40,7 +41,32 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         GIDSignIn.sharedInstance.configuration = GIDConfiguration(
             clientID: CourseGrabEnvironment.Keys.googleClientID
         )
+
+        registerForRemoteNotificationsIfAuthorized()
         return true
+    }
+
+    private func registerForRemoteNotificationsIfAuthorized() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            let hasPermission: Bool = {
+                switch settings.authorizationStatus {
+                case .authorized, .provisional:
+                    return true
+                default:
+                    return false
+                }
+            }()
+
+            guard hasPermission else { return }
+
+            // Respect the in-app toggle: only register with APNs if the user has enabled notifications
+            // in Settings (the system permission alone isn't enough).
+            guard UserDefaults.standard.bool(forKey: "areNotificationsEnabled") else { return }
+
+            DispatchQueue.main.async {
+                UIApplication.shared.registerForRemoteNotifications()
+            }
+        }
     }
 
     func application(
