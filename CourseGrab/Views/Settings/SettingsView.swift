@@ -47,11 +47,17 @@ struct SettingsView: View {
 
                         Spacer()
 
-                        Toggle("", isOn: $viewModel.notificationsEnabled)
+                        Toggle(
+                            "",
+                            isOn: Binding(
+                                get: { viewModel.notificationsEnabled },
+                                set: { newValue in
+                                    viewModel.notificationsEnabled = newValue
+                                    viewModel.toggleNotifications(newValue)
+                                }
+                            )
+                        )
                             .labelsHidden()
-                            .onChange(of: viewModel.notificationsEnabled) { newValue in
-                                viewModel.toggleNotifications(newValue)
-                            }
                     }
 
                     // Local timezone
