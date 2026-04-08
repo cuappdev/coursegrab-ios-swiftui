@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
 
-    @StateObject private var sessionManager = UserSessionManager.shared
+    @StateObject private var sessionManager = UserSessionManager.shared // temporary (might need to have separate auth view model)
 
     var body: some View {
         Group {
@@ -23,9 +23,9 @@ struct ContentView: View {
             sessionManager.restorePreviousSession { result in
                 switch result {
                 case .success:
-                    break // isAuthenticated fires via Firebase listener
+                    break // MARK: isAuthenticated fires via Firebase listener
                 case .needsSignIn, .invalidEmail, .error:
-                    break // LoginView shown via isAuthenticated = false
+                    break // MARK: LoginView shown via isAuthenticated = false
                 }
             }
         }

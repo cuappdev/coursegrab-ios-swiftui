@@ -27,16 +27,20 @@ extension SettingsView {
 
         // MARK: - Init
 
-        init(sessionManager: UserSessionManager = .shared) {
+        init() {
             localTimezoneEnabled = UserDefaults.standard.bool(forKey: "localTimezoneEnabled")
             canSendMail = MFMailComposeViewController.canSendMail()
-            accountEmail = sessionManager.email ?? ""
-            sessionManager.$email
-                .receive(on: DispatchQueue.main)
+
+            // Initial value
+            accountEmail = UserSessionManager.shared.email ?? ""
+
+            // Keep it in sync
+            UserSessionManager.shared.$email
                 .sink { [weak self] email in
                     self?.accountEmail = email ?? ""
                 }
                 .store(in: &sessionCancellables)
+
             Task { await refreshNotificationStatus() }
         }
 
@@ -55,9 +59,11 @@ extension SettingsView {
                 case .authorized:
                     UserDefaults.standard.set(enabled, forKey: "areNotificationsEnabled")
                     try? await NetworkManager.shared.enableNotifications(enabled: enabled)
+
                 case .notDetermined:
-                    // Ask for permission first
-                    let granted = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound])
+                    let granted = try? await UNUserNotificationCenter.current()
+                        .requestAuthorization(options: [.alert, .badge, .sound])
+
                     if granted == true {
                         UIApplication.shared.registerForRemoteNotifications()
                         UserDefaults.standard.set(true, forKey: "areNotificationsEnabled")
@@ -65,8 +71,8 @@ extension SettingsView {
                     } else {
                         notificationsEnabled = false
                     }
+
                 default:
-                    // Denied — open settings
                     notificationsEnabled = false
                     if let url = URL(string: UIApplication.openSettingsURLString) {
                         await UIApplication.shared.open(url)
@@ -97,7 +103,5 @@ extension SettingsView {
                 UserSessionManager.shared.logout()
             }
         }
-
     }
-
 }
