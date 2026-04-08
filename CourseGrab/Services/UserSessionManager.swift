@@ -225,9 +225,6 @@ class UserSessionManager: ObservableObject {
                     return
                 }
                 self.googleToken = idToken
-                Task {
-                    await self.refreshSessionIfNeeded()
-                }
                 self.debugSessionState("restorePreviousSession (success)")
                 completion(.success)
             }
