@@ -13,6 +13,7 @@ struct HomeSectionCardView: View {
 
     let section: CourseSection
     let onUntrack: () -> Void
+    @AppStorage("localTimezoneEnabled") private var localTimezoneEnabled: Bool = false
 
     // MARK: - Body
 
@@ -49,7 +50,7 @@ struct HomeSectionCardView: View {
                     .clipShape(Capsule())
             }
 
-            Text(section.getSectionByTimezone())
+            Text(section.getSectionByTimezone(useLocalTimezone: localTimezoneEnabled))
                 .font(Constants.Fonts.medium14)
                 .foregroundStyle(Constants.Colors.gray)
 

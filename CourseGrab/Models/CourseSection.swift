@@ -41,6 +41,12 @@ struct CourseSection: Codable, Identifiable {
     }
     
     func getSectionByTimezone() -> String {
+        getSectionByTimezone(
+            useLocalTimezone: UserDefaults.standard.bool(forKey: "localTimezoneEnabled")
+        )
+    }
+
+    func getSectionByTimezone(useLocalTimezone: Bool) -> String {
         if let index = section.lastIndex(of: " ") {
             let timeIndexStart = section.index(after: index)
             let sectionString = String(section[..<timeIndexStart])
@@ -52,7 +58,7 @@ struct CourseSection: Codable, Identifiable {
             guard let date = dateFormatter.date(from: timeString) else {
                 return section
             }
-            if UserDefaults.standard.bool(forKey: "localTimezoneEnabled") {
+            if useLocalTimezone {
                 dateFormatter.timeZone = TimeZone.current
             }
             dateFormatter.dateFormat = "h:mma"

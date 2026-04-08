@@ -14,6 +14,7 @@ struct SearchDetailSectionRow: View {
     let section: CourseSection
     let onTrack: () -> Void
     let onUntrack: () -> Void
+    @AppStorage("localTimezoneEnabled") private var localTimezoneEnabled: Bool = false
 
     // MARK: - Body
 
@@ -23,7 +24,7 @@ struct SearchDetailSectionRow: View {
                 .frame(width: 16, height: 16)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(section.getSectionByTimezone())
+                Text(section.getSectionByTimezone(useLocalTimezone: localTimezoneEnabled))
                     .font(Constants.Fonts.semibold14)
                     .foregroundStyle(Constants.Colors.black)
 
