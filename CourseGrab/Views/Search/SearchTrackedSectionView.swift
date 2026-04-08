@@ -13,6 +13,7 @@ struct SearchTrackedSectionRow: View {
 
     let section: CourseSection
     let onUntrack: (CourseSection) -> Void
+    @AppStorage("localTimezoneEnabled") private var localTimezoneEnabled: Bool = false
 
     // MARK: - Body
 
@@ -21,7 +22,7 @@ struct SearchTrackedSectionRow: View {
             StatusBadgeView(status: section.status)
                 .frame(width: 16, height: 16)
 
-            Text(section.getSectionByTimezone())
+            Text(section.getSectionByTimezone(useLocalTimezone: localTimezoneEnabled))
                 .font(Constants.Fonts.semibold14)
                 .foregroundStyle(Constants.Colors.black)
                 .lineLimit(1)
