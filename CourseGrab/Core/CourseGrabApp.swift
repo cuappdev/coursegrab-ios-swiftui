@@ -42,6 +42,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             clientID: CourseGrabEnvironment.Keys.googleClientID
         )
 
+        UNUserNotificationCenter.current().delegate = self
         registerForRemoteNotificationsIfAuthorized()
         return true
     }
@@ -104,4 +105,14 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         logger.error("Failed to register for remote notifications: \(error.localizedDescription)")
     }
 
+}
+
+extension AppDelegate: UNUserNotificationCenterDelegate {
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .badge, .sound])
+    }
 }
