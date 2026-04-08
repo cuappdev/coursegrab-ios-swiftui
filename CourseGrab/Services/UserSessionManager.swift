@@ -111,6 +111,16 @@ class UserSessionManager: ObservableObject {
             guard let self else { return }
             DispatchQueue.main.async {
                 self.isAuthenticated = user != nil
+                // Keep profile fields in sync when Firebase restores a user but Google Sign-In
+                // didn't repopulate Keychain-backed properties (e.g. GID restore error -4).
+                if let user {
+                    if self.email?.isEmpty ?? true, let firebaseEmail = user.email, !firebaseEmail.isEmpty {
+                        self.email = firebaseEmail
+                    }
+                    if self.displayName?.isEmpty ?? true, let name = user.displayName, !name.isEmpty {
+                        self.displayName = name
+                    }
+                }
             }
         }
     }

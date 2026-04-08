@@ -21,12 +21,22 @@ extension SettingsView {
         @Published var localTimezoneEnabled: Bool = false
         @Published var canSendMail: Bool = false
         @Published var showMailError: Bool = false
+        @Published var accountEmail: String = ""
+
+        private var sessionCancellables = Set<AnyCancellable>()
 
         // MARK: - Init
 
-        init() {
+        init(sessionManager: UserSessionManager = .shared) {
             localTimezoneEnabled = UserDefaults.standard.bool(forKey: "localTimezoneEnabled")
             canSendMail = MFMailComposeViewController.canSendMail()
+            accountEmail = sessionManager.email ?? ""
+            sessionManager.$email
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] email in
+                    self?.accountEmail = email ?? ""
+                }
+                .store(in: &sessionCancellables)
             Task { await refreshNotificationStatus() }
         }
 
