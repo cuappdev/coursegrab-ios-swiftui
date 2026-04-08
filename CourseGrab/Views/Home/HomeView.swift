@@ -69,7 +69,7 @@ struct HomeView: View {
                     onSectionTracked: { message in
                         showSearch = false
                         Task { await viewModel.fetchTrackedSections() }
-                        bannerMessage = message
+                        bannerMessage = message // MARK: Completion Handler!
                         withAnimation { showBanner = true }
                         Task {
                             try? await Task.sleep(nanoseconds: 1_150_000_000)

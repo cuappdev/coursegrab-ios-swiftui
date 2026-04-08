@@ -224,9 +224,9 @@ class NetworkManager: APIClient {
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             if let http = response as? HTTPURLResponse {
-                logger.info("⬅️ \(request.httpMethod ?? "") \(http.statusCode) \(request.url?.absoluteString ?? "")")
+                logger.info("\(request.httpMethod ?? "") \(http.statusCode) \(request.url?.absoluteString ?? "")")
             } else {
-                logger.info("⬅️ \(request.httpMethod ?? "") \(request.url?.absoluteString ?? "") (non-HTTP response)")
+                logger.info("\(request.httpMethod ?? "") \(request.url?.absoluteString ?? "") (non-HTTP response)")
             }
             return (data, response)
         } catch {
@@ -252,7 +252,7 @@ class NetworkManager: APIClient {
         let url = request.url?.absoluteString ?? "?"
         let bodyBytes = request.httpBody?.count ?? 0
         let hasAuth = (request.value(forHTTPHeaderField: "Authorization") != nil)
-        logger.info("➡️ \(method) \(url) (bodyBytes=\(bodyBytes), auth=\(hasAuth))")
+        logger.info("\(method) \(url) (bodyBytes=\(bodyBytes), auth=\(hasAuth))")
     }
 
     private func logRequestFailure(_ request: URLRequest, error: Error) {
@@ -260,9 +260,9 @@ class NetworkManager: APIClient {
         let url = request.url?.absoluteString ?? "?"
 
         if let urlError = error as? URLError {
-            logger.error("❌ \(method) \(url) failed: URLError(\(urlError.code.rawValue)) \(urlError.localizedDescription)")
+            logger.error("\(method) \(url) failed: URLError(\(urlError.code.rawValue)) \(urlError.localizedDescription)")
         } else {
-            logger.error("❌ \(method) \(url) failed: \(String(describing: error))")
+            logger.error("\(method) \(url) failed: \(String(describing: error))")
         }
     }
 
@@ -277,7 +277,7 @@ class NetworkManager: APIClient {
         let bodyString = String(data: data, encoding: .utf8) ?? "<non-utf8 body, \(data.count) bytes>"
         logger.error(
             """
-            🧩 Decoding failed for \(method) \(url). Expected=\(String(describing: expectedType)). Error=\(String(describing: error)).
+            Decoding failed for \(method) \(url). Expected=\(String(describing: expectedType)). Error=\(String(describing: error)).
             Body=\(bodyString)
             """
         )
