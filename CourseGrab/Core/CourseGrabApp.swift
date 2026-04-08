@@ -62,7 +62,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
             // Respect the in-app toggle: only register with APNs if the user has enabled notifications
             // in Settings (the system permission alone isn't enough).
-            guard UserDefaults.standard.bool(forKey: "areNotificationsEnabled") else { return }
+            let hasUserPreference = UserDefaults.standard.object(forKey: "areNotificationsEnabled") != nil
+            if hasUserPreference, UserDefaults.standard.bool(forKey: "areNotificationsEnabled") == false {
+                return
+            }
 
             DispatchQueue.main.async {
                 UIApplication.shared.registerForRemoteNotifications()
