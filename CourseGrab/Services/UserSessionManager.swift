@@ -225,9 +225,6 @@ class UserSessionManager: ObservableObject {
                     return
                 }
                 self.googleToken = idToken
-                Task {
-                    await self.refreshSessionIfNeeded()
-                }
                 self.debugSessionState("restorePreviousSession (success)")
                 completion(.success)
             }
@@ -245,6 +242,15 @@ class UserSessionManager: ObservableObject {
         GIDSignIn.sharedInstance.signOut()
         try? Auth.auth().signOut()
     }
+
+#if DEBUG
+    /// Debug-only helper to force the session into an expired state so the next
+    /// `refreshSessionIfNeeded()` call exercises `/api/session/update/`.
+    @MainActor
+    func debugForceExpireSession() {
+        sessionExpiration = .distantPast
+    }
+#endif
 
     // MARK: - Device Token
 

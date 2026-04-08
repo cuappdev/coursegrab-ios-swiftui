@@ -108,6 +108,21 @@ struct SettingsView: View {
                         }
                     }
 
+#if DEBUG
+                    Button {
+                        Task {
+                            await MainActor.run {
+                                UserSessionManager.shared.debugForceExpireSession()
+                            }
+                            await UserSessionManager.shared.refreshSessionIfNeeded()
+                        }
+                    } label: {
+                        Text("Force Expire Session (Debug)")
+                            .font(Constants.Fonts.semibold16)
+                            .foregroundStyle(.orange)
+                    }
+#endif
+
                     HStack(alignment: .center, spacing: 0) {
                         HStack(alignment: .center, spacing: 8) {
                             Constants.Images.profile
