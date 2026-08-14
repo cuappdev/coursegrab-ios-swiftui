@@ -116,29 +116,6 @@ struct SettingsView: View {
 
                     HStack(alignment: .center, spacing: 0) {
                         HStack(alignment: .center, spacing: 8) {
-                            Constants.Images.profile
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 32, height: 32)
-                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text("Built by")
-                                    .font(Constants.Fonts.medium12)
-                                    .foregroundStyle(Constants.Colors.gray)
-                                
-                                Text("Jiwon Jeong")
-                                    .font(Constants.Fonts.semibold14)
-                                    .foregroundStyle(Constants.Colors.black)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.85)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                        Spacer(minLength: 16)
-
-                        HStack(alignment: .center, spacing: 8) {
                             Constants.Images.appdev
                                 .resizable()
                                 .scaledToFit()
