@@ -23,11 +23,9 @@ class AuthViewModel: ObservableObject {
     // MARK: - Init
 
     init() {
-        // Initial value
-        isAuthenticated = session.isAuthenticated
+        isAuthenticated = session.isLoggedIn
 
-        // Keep in sync
-        session.$isAuthenticated
+        session.$isLoggedIn
             .sink { [weak self] value in
                 self?.isAuthenticated = value
             }
@@ -37,9 +35,10 @@ class AuthViewModel: ObservableObject {
     // MARK: - Actions
 
     func restoreSession() {
-        session.restorePreviousSession { _ in
-            // nothing needed
-            // Firebase listener updates isAuthenticated automatically
+        session.restorePreviousSession { [session] result in
+            if case .success = result {
+                Task { await session.refreshSessionIfNeeded() }
+            }
         }
     }
 
