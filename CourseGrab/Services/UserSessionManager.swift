@@ -20,6 +20,8 @@ class UserSessionManager: ObservableObject {
 
     @Published var isAuthenticated: Bool = false
 
+    @Published var isLoggedIn: Bool = false
+
     @Published var displayName: String? {
         didSet {
             if let displayName {
@@ -107,6 +109,11 @@ class UserSessionManager: ObservableObject {
             self.sessionExpiration = ISO8601DateFormatter().date(from: expStr)
         }
 
+        Publishers.CombineLatest($isAuthenticated, $sessionToken)
+            .map { authenticated, sessionToken in authenticated && sessionToken != nil }
+            .removeDuplicates()
+            .assign(to: &$isLoggedIn)
+
         authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             guard let self else { return }
             DispatchQueue.main.async {
@@ -155,15 +162,10 @@ class UserSessionManager: ObservableObject {
 
     func refreshSessionIfNeeded() async {
         debugSessionState("refreshSessionIfNeeded (start)")
-        // If Firebase thinks we're signed in but we don't have the Google token needed
-        // to initialize/refresh backend session tokens, force a logout so the UI returns
-        // to the login screen instead of getting stuck in an unauthenticated "Home" state.
-        if isAuthenticated, googleToken == nil {
-            await MainActor.run { logout() }
-            return
-        }
         guard let expiration = sessionExpiration else {
-            await initializeSession()
+            if googleToken != nil {
+                await initializeSession()
+            }
             return
         }
         if expiration <= Date() {

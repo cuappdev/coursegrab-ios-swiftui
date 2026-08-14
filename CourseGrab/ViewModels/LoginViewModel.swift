@@ -28,12 +28,11 @@ class LoginViewModel: ObservableObject {
         isLoading = true
 
         Task {
+            defer { isLoading = false }
             do {
                 let result = try await GIDSignIn.sharedInstance.signIn(
                     withPresenting: presentingViewController
                 )
-
-                isLoading = false
 
                 let user = result.user
                 guard let email = user.profile?.email else { return }
@@ -48,6 +47,10 @@ class LoginViewModel: ObservableObject {
                 guard let idToken = user.idToken?.tokenString else { return }
                 let accessToken = user.accessToken.tokenString
 
+                UserSessionManager.shared.googleToken = idToken
+                UserSessionManager.shared.displayName = user.profile?.name
+                UserSessionManager.shared.email = email
+
                 let credential = GoogleAuthProvider.credential(
                     withIDToken: idToken,
                     accessToken: accessToken
@@ -55,16 +58,11 @@ class LoginViewModel: ObservableObject {
 
                 try await Auth.auth().signIn(with: credential)
 
-                UserSessionManager.shared.googleToken = idToken
-                UserSessionManager.shared.displayName = user.profile?.name
-                UserSessionManager.shared.email = email
-
                 await UserSessionManager.shared.initializeSession()
 
                 success(email, user.profile?.name ?? "")
 
             } catch {
-                isLoading = false
                 didPresentError = true
                 errorText = error.localizedDescription
             }
