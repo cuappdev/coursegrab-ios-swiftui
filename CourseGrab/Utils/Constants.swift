@@ -68,6 +68,7 @@ struct Constants {
         static let appdevWordmark = Image("appdev-wordmark")
         static let courseGrabLogo = Image("coursegrab-logo")
         static let courseGrabReadme = Image("coursegrab-readme")
+        static let googleG = Image("google-g")
     }
 
     enum Padding {
