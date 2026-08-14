@@ -18,7 +18,14 @@ class UserSessionManager: ObservableObject {
 
     // MARK: - Published Properties
 
+    /// `true` when Firebase has a user. This can be true *before* the backend
+    /// session exists, so it must not be used on its own to gate the UI.
     @Published var isAuthenticated: Bool = false
+
+    /// The app is only truly usable once Firebase is signed in AND we hold a
+    /// backend session token. This is what the UI should gate on so Home never
+    /// renders (and bounces) before the session is ready.
+    @Published var isLoggedIn: Bool = false
 
     @Published var displayName: String? {
         didSet {
@@ -107,6 +114,13 @@ class UserSessionManager: ObservableObject {
             self.sessionExpiration = ISO8601DateFormatter().date(from: expStr)
         }
 
+        // Derive `isLoggedIn` from both Firebase auth state and the presence of a
+        // backend session token, so the UI only shows Home when both are ready.
+        Publishers.CombineLatest($isAuthenticated, $sessionToken)
+            .map { authenticated, sessionToken in authenticated && sessionToken != nil }
+            .removeDuplicates()
+            .assign(to: &$isLoggedIn)
+
         authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             guard let self else { return }
             DispatchQueue.main.async {
@@ -155,15 +169,16 @@ class UserSessionManager: ObservableObject {
 
     func refreshSessionIfNeeded() async {
         debugSessionState("refreshSessionIfNeeded (start)")
-        // If Firebase thinks we're signed in but we don't have the Google token needed
-        // to initialize/refresh backend session tokens, force a logout so the UI returns
-        // to the login screen instead of getting stuck in an unauthenticated "Home" state.
-        if isAuthenticated, googleToken == nil {
-            await MainActor.run { logout() }
-            return
-        }
+        // A valid backend session only needs the session/update tokens — NOT the
+        // Google token, which is used solely to initialize a brand-new session.
+        // Only reach for `initializeSession` (which requires `googleToken`) when we
+        // have no session at all. Never force a logout here just because
+        // `googleToken` is momentarily nil during the sign-in transition — that was
+        // the source of the "flash then return to login" bounce.
         guard let expiration = sessionExpiration else {
-            await initializeSession()
+            if googleToken != nil {
+                await initializeSession()
+            }
             return
         }
         if expiration <= Date() {
