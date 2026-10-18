@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+/// FA26 `class cards` type=discussion: status, section time and logistics, plus the bell toggle.
 struct SearchDetailSectionRow: View {
 
     // MARK: - Properties
@@ -16,52 +17,43 @@ struct SearchDetailSectionRow: View {
     let onUntrack: () -> Void
     @AppStorage("localTimezoneEnabled") private var localTimezoneEnabled: Bool = false
 
-    // MARK: - Body
+    // MARK: - UI
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .top, spacing: Constants.Detail.discussionSpacing) {
             StatusBadgeView(status: section.status)
-                .frame(width: 16, height: 16)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(section.getSectionByTimezone(useLocalTimezone: localTimezoneEnabled))
-                    .font(Constants.Fonts.semibold14)
-                    .foregroundStyle(Constants.Colors.black)
-
-                HStack(spacing: 4) {
-                    Constants.Images.iconPopularity
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 16, height: 12)
-                    
-                    Text("\(section.numTracking) tracking")
-                        .font(Constants.Fonts.medium12)
-                        .foregroundStyle(Constants.Colors.mediumGray)
-                }
-            }
-
-            Spacer()
-
-            Button {
-                section.isTracking ? onUntrack() : onTrack()
-            } label: {
-                Text(section.isTracking ? "REMOVE" : "TRACK")
-                    .font(Constants.Fonts.medium12)
-                    .foregroundStyle(
-                        section.isTracking ? Constants.Colors.ruby : Constants.Colors.black
-                    )
-                    .frame(width: 90, height: 24)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 2)
-                            .stroke(
-                                section.isTracking ? Constants.Colors.ruby : Constants.Colors.black,
-                                lineWidth: 1
-                            )
-                    )
-            }
+                .padding(.top, 1)
+            texts
+            TrackingBellToggleView(
+                isTracking: section.isTracking,
+                onToggle: section.isTracking ? onUntrack : onTrack
+            )
         }
-        .padding(.horizontal, Constants.Padding.screenHorizontal)
-        .frame(height: 62)
+        .padding(Constants.Card.padding)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardStyle()
+    }
+
+    private var texts: some View {
+        VStack(alignment: .leading, spacing: Constants.Detail.discussionTextSpacing) {
+            Text(section.getSectionByTimezone(useLocalTimezone: localTimezoneEnabled))
+                .font(Constants.Fonts.h3)
+                .foregroundStyle(Constants.Colors.black)
+            Text("\(section.mode) · \(section.displayInstructors)")
+                .font(Constants.Fonts.body)
+                .foregroundStyle(Constants.Colors.darkGray)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
 }
+
+#if DEBUG
+#Preview {
+    VStack {
+        SearchDetailSectionRow(section: .mockDiscussion, onTrack: {}, onUntrack: {})
+        SearchDetailSectionRow(section: .mockClosed, onTrack: {}, onUntrack: {})
+    }
+    .padding()
+}
+#endif

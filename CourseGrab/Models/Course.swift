@@ -18,6 +18,11 @@ struct Course: Codable, Identifiable {
         Array(Set(sections.reduce(into: []) { $0 += $1.instructors }))
     }
     
+    /// Course code, e.g. "ANTHR 1400".
+    var displayCode: String {
+        "\(subjectCode) \(String(courseNum))"
+    }
+
     var displayTitle: String {
         "\(subjectCode) \(String(courseNum)): \(title)"
     }

@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+/// FA26 `class cards` type=search: course title with a trailing caret. Sections the user
+/// already tracks are listed underneath with a remove button (kept from the previous design).
 struct SearchCourseCardView: View {
 
     // MARK: - Properties
@@ -14,41 +16,47 @@ struct SearchCourseCardView: View {
     let course: Course
     let onUntrack: (CourseSection) -> Void
 
-    // MARK: - Body
+    private var trackedSections: [CourseSection] {
+        course.sections.filter { $0.isTracking }
+    }
+
+    // MARK: - UI
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top) {
-                Text(course.displayTitle)
-                    .font(Constants.Fonts.semibold16)
-                    .foregroundStyle(Constants.Colors.black)
-                    .multilineTextAlignment(.leading)
-                
-                Spacer()
-                
-                Constants.Images.iconArrow
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 16, height: 16)
-                    .foregroundStyle(Constants.Colors.black)
-            }
-            .padding(16)
-
-            let tracked = course.sections.filter { $0.isTracking }
-            
-            if !tracked.isEmpty {
-                ForEach(tracked) { section in
-                    Divider()
-                        .padding(.horizontal, 0)
-                    SearchTrackedSectionRow(section: section, onUntrack: onUntrack)
-                }
+            titleRow
+            ForEach(trackedSections) { section in
+                Divider()
+                    .overlay(Constants.Colors.gray)
+                SearchTrackedSectionRow(section: section, onUntrack: onUntrack)
             }
         }
-        .background(.white)
-        .clipShape(RoundedRectangle(cornerRadius: 5))
-        .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 0)
-        .padding(.horizontal, Constants.Padding.screenHorizontal)
-        .padding(.vertical, Constants.Padding.cellVertical)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardStyle()
+    }
+
+    private var titleRow: some View {
+        HStack {
+            Text(course.displayTitle)
+                .font(Constants.Fonts.h3)
+                .foregroundStyle(Constants.Colors.black)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Constants.Images.rightCaret
+                .resizable()
+                .scaledToFit()
+                .frame(width: Constants.Card.caretSize, height: Constants.Card.caretSize)
+        }
+        .padding(.vertical, Constants.Card.padding)
+        .padding(.leading, Constants.Card.padding)
+        .padding(.trailing, Constants.Card.searchTrailingPadding)
     }
 
 }
+
+#if DEBUG
+#Preview {
+    SearchCourseCardView(course: .mock, onUntrack: { _ in })
+        .padding()
+}
+#endif

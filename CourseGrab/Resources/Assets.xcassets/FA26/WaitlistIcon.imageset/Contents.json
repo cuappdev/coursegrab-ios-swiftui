@@ -1,0 +1,23 @@
+{
+  "images": [
+    {
+      "filename": "WaitlistIcon.png",
+      "idiom": "universal",
+      "scale": "1x"
+    },
+    {
+      "filename": "WaitlistIcon@2x.png",
+      "idiom": "universal",
+      "scale": "2x"
+    },
+    {
+      "filename": "WaitlistIcon@3x.png",
+      "idiom": "universal",
+      "scale": "3x"
+    }
+  ],
+  "info": {
+    "author": "xcode",
+    "version": 1
+  }
+}
