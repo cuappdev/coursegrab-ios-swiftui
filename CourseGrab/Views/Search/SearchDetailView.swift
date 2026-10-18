@@ -7,49 +7,76 @@
 
 import SwiftUI
 
+/// FA26 class detail. Tracking happens in place; the back caret returns to Home (with the
+/// tracking banner) if anything was tracked or untracked here, otherwise back to Search.
 struct SearchDetailView: View {
 
     // MARK: - Properties
 
     let course: Course
-    let searchViewModel: SearchView.ViewModel
+    @ObservedObject var searchViewModel: SearchView.ViewModel
     let onSectionTracked: (_ message: String) -> Void
+    @Environment(\.dismiss) private var dismiss
 
-    // MARK: - Body
+    private var currentCourse: Course {
+        searchViewModel.currentCourse(for: course)
+    }
+
+    // MARK: - UI
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
-                SearchDetailCardView(course: course)
-                    .padding(.vertical, 12)
+            VStack(alignment: .leading, spacing: Constants.Padding.sectionSpacing) {
+                titleBar
+                infoBlock
+                secondarySections
+            }
+            .padding(.horizontal, Constants.Padding.screenHorizontal)
+            .padding(.top, Constants.Padding.detailTop)
+            .padding(.bottom, Constants.Padding.screenBottom)
+        }
+        .background(Constants.Colors.white.ignoresSafeArea())
+        .toolbar(.hidden, for: .navigationBar)
+    }
 
-                ForEach(course.sections) { section in
-                    Divider()
-                    SearchDetailSectionRow(
-                        section: section,
-                        onTrack: {
-                            Task {
-                                await searchViewModel.track(section: section)
-                                let message = "You are now tracking \(course.subjectCode) \(String(course.courseNum)) \(section.getSectionNum())"
-                                onSectionTracked(message)
-                            }
-                        },
-                        onUntrack: {
-                            Task {
-                                await searchViewModel.untrack(section: section)
-                                let message = "You are no longer tracking \(course.subjectCode) \(String(course.courseNum)) \(section.getSectionNum())"
-                                onSectionTracked(message)
-                            }
-                        }
-                    )
-                }
+    private var titleBar: some View {
+        NavigationTitleBarView(title: currentCourse.displayCode) {
+            searchViewModel.leaveDetail(onTrackingChanged: onSectionTracked, onDismiss: { dismiss() })
+        }
+    }
+
+    private var infoBlock: some View {
+        SearchDetailCardView(
+            course: currentCourse,
+            section: searchViewModel.primarySection(of: currentCourse),
+            onToggleTracking: { Task { await searchViewModel.togglePrimaryTracking(in: currentCourse) } }
+        )
+    }
+
+    @ViewBuilder
+    private var secondarySections: some View {
+        let sections = searchViewModel.secondarySections(of: currentCourse)
+        if !sections.isEmpty {
+            Text(searchViewModel.secondarySectionsTitle(of: currentCourse))
+                .font(Constants.Fonts.h3)
+                .foregroundStyle(Constants.Colors.black)
+
+            ForEach(sections) { section in
+                SearchDetailSectionRow(
+                    section: section,
+                    onTrack: { Task { await searchViewModel.toggleTracking(section, in: currentCourse) } },
+                    onUntrack: { Task { await searchViewModel.toggleTracking(section, in: currentCourse) } }
+                )
             }
         }
-        .navigationTitle("\(course.subjectCode) \(String(course.courseNum))")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.black, for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
     }
 
 }
+
+#if DEBUG
+#Preview {
+    NavigationStack {
+        SearchDetailView(course: .mock, searchViewModel: SearchView.ViewModel(), onSectionTracked: { _ in })
+    }
+}
+#endif

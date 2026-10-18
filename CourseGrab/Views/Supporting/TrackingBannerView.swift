@@ -13,21 +13,23 @@ struct TrackingBannerView: View {
 
     let message: String
 
-    // MARK: - Body
+    // MARK: - UI
 
     var body: some View {
         Text(message)
-            .font(Constants.Fonts.bold12)
+            .font(Constants.Fonts.banner)
             .foregroundStyle(Constants.Colors.black)
             .multilineTextAlignment(.center)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, Constants.Banner.horizontalPadding)
+            .padding(.vertical, Constants.Banner.verticalPadding)
             .frame(maxWidth: .infinity)
-            .background(Constants.Colors.white)
-            .clipShape(RoundedRectangle(cornerRadius: 5))
-            .shadow(color: .black.opacity(0.15), radius: 4)
+            .cardStyle(cornerRadius: Constants.Radius.button)
             .padding(.horizontal, Constants.Padding.screenHorizontal)
-            .padding(.top, 8)
+            .padding(.top, Constants.Banner.topPadding)
     }
 
+}
+
+#Preview {
+    TrackingBannerView(message: "You are now tracking ANTHR 1400 LEC 001")
 }

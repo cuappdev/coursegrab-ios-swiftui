@@ -14,149 +14,131 @@ struct SettingsView: View {
 
     @StateObject private var viewModel = ViewModel()
     @Environment(\.dismiss) private var dismiss
-    @State private var showMailComposer = false
 
-    // MARK: - Body
+    private var notificationsBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel.notificationsEnabled },
+            set: { viewModel.setNotificationsEnabled($0) }
+        )
+    }
+
+    // MARK: - UI
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Drag indicator
-            HStack {
-                Spacer()
-                
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(Constants.Colors.veryLightGray)
-                    .frame(width: 40, height: 5)
-                
-                Spacer()
-            }
-            .padding(.top, 12)
-            .padding(.bottom, 20)
-
-            Text("Settings")
-                .font(Constants.Fonts.bold24)
-                .padding(.horizontal, Constants.Padding.screenHorizontal)
-
+        VStack(alignment: .leading, spacing: Constants.Settings.spacing) {
+            NavigationTitleBarView(title: "Settings") { dismiss() }
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-
-                    // Mobile alerts
-                    HStack {
-                        Text("Mobile Alerts")
-                            .font(Constants.Fonts.semibold16)
-
-                        Spacer()
-
-                        Toggle(
-                            "",
-                            isOn: Binding(
-                                get: { viewModel.notificationsEnabled },
-                                set: { newValue in
-                                    viewModel.notificationsEnabled = newValue
-                                    viewModel.toggleNotifications(newValue)
-                                }
-                            )
-                        )
-                            .labelsHidden()
-                    }
-
-                    // Local timezone
-                    HStack {
-                        Text("Use Local Timezone")
-                            .font(Constants.Fonts.semibold16)
-
-                        Spacer()
-
-                        Toggle("", isOn: $viewModel.localTimezoneEnabled)
-                            .labelsHidden()
-                            .onChange(of: viewModel.localTimezoneEnabled) { newValue in
-                                viewModel.toggleLocalTimezone(newValue)
-                            }
-                    }
-
-                    // Cornell Academic Calendar
-                    Button {
-                        viewModel.openCalendar()
-                    } label: {
-                        Text("Cornell Academic Calendar")
-                            .font(Constants.Fonts.semibold16)
-                            .foregroundStyle(Constants.Colors.hotlink)
-                    }
-
-                    // Leave Feedback
-                    Button {
-                        if viewModel.canSendMail {
-                            showMailComposer = true
-                        } else {
-                            viewModel.showMailError = true
-                        }
-                    } label: {
-                        Text("Leave Feedback")
-                            .font(Constants.Fonts.semibold16)
-                            .foregroundStyle(Constants.Colors.hotlink)
-                    }
-
-                    // Account + Sign out
-                    HStack {
-                        Text(viewModel.accountEmail)
-                            .font(Constants.Fonts.semibold16)
-                            .foregroundStyle(Constants.Colors.darkGray)
-
-                        Spacer()
-
-                        Button {
-                            dismiss()
-                            viewModel.signOut()
-                        } label: {
-                            Text("Sign Out")
-                                .font(Constants.Fonts.semibold16)
-                                .foregroundStyle(Constants.Colors.ruby)
-                        }
-                    }
-
-                    HStack(alignment: .center, spacing: 0) {
-                        HStack(alignment: .center, spacing: 8) {
-                            Constants.Images.appdev
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 32, height: 32)
-
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text("Maintained by")
-                                    .font(Constants.Fonts.medium12)
-                                    .foregroundStyle(Constants.Colors.gray)
-                                Text("AppDev")
-                                    .font(Constants.Fonts.semibold14)
-                                    .foregroundStyle(Constants.Colors.black)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.85)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .padding(.top, 8)
+                VStack(alignment: .leading, spacing: Constants.Settings.spacing) {
+                    credit
+                    actions
                 }
-                .padding(.horizontal, Constants.Padding.screenHorizontal)
-                .padding(.top, 20)
-                .padding(.bottom, 16)
             }
+            footer
         }
-        .onAppear {
-            Task { await viewModel.refreshNotificationStatus() }
+        .padding(.horizontal, Constants.Padding.screenHorizontal)
+        .padding(.top, Constants.Padding.detailTop)
+        .background(Constants.Colors.white.ignoresSafeArea())
+        .toolbar(.hidden, for: .navigationBar)
+        .task {
+            await viewModel.refreshNotificationStatus()
         }
-        .sheet(isPresented: $showMailComposer) {
+        .sheet(isPresented: $viewModel.showMailComposer) {
             MailComposerView(recipient: "team@cornellappdev.com", subject: "CourseGrab Feedback")
         }
         .alert("Couldn't Send Email", isPresented: $viewModel.showMailError) {
-            Button("Open Settings") {
-                if let url = URL(string: UIApplication.openSettingsURLString) {
-                    UIApplication.shared.open(url)
-                }
-            }
+            Button("Open Settings") { viewModel.openAppSettings() }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Please add an email account in Settings or contact us at team@cornellappdev.com")
         }
     }
 
+    // MARK: - Credit
+
+    private var credit: some View {
+        HStack(spacing: Constants.Settings.creditSpacing) {
+            Constants.Images.rocketLogo
+                .resizable()
+                .scaledToFit()
+                .frame(width: Constants.Settings.rocketSize.width, height: Constants.Settings.rocketSize.height)
+            VStack(alignment: .leading, spacing: Constants.Settings.creditTextSpacing) {
+                Text("Designed and developed by")
+                    .font(Constants.Fonts.creditCaption)
+                    .foregroundStyle(Constants.Colors.darkGray)
+                (Text("Cornell").font(Constants.Fonts.creditCornell)
+                    + Text("AppDev").font(Constants.Fonts.creditAppDev))
+                    .tracking(Constants.Settings.creditTracking)
+                    .foregroundStyle(Constants.Colors.black)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - Actions
+
+    private var actions: some View {
+        VStack(alignment: .leading, spacing: Constants.Settings.actionsSpacing) {
+            toggleRow(title: "Mobile Alerts", isOn: notificationsBinding)
+            toggleRow(title: "Display Local Timezone", isOn: $viewModel.localTimezoneEnabled)
+                .onChange(of: viewModel.localTimezoneEnabled) { newValue in
+                    viewModel.toggleLocalTimezone(newValue)
+                }
+            linkRow(title: "Cornell Academic Calendar") { viewModel.openCalendar() }
+            linkRow(title: "Leave Feedback") { viewModel.leaveFeedback() }
+        }
+    }
+
+    private func toggleRow(title: String, isOn: Binding<Bool>) -> some View {
+        Toggle(isOn: isOn) {
+            Text(title)
+                .font(Constants.Fonts.h3)
+                .foregroundStyle(Constants.Colors.black)
+        }
+        .tint(Constants.Colors.green)
+        .padding(Constants.Settings.rowPadding)
+    }
+
+    private func linkRow(title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack {
+                Text(title)
+                    .font(Constants.Fonts.h3)
+                    .foregroundStyle(Constants.Colors.blue)
+                Spacer()
+                Constants.Images.externalLinkBlue
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: Constants.Settings.externalIconSize, height: Constants.Settings.externalIconSize)
+            }
+            .padding(Constants.Settings.rowPadding)
+            .cardStyle(cornerRadius: Constants.Radius.button)
+        }
+        .buttonStyle(.scale)
+    }
+
+    // MARK: - Footer
+
+    private var footer: some View {
+        HStack {
+            Text(viewModel.accountEmail)
+                .font(Constants.Settings.footerFont)
+                .foregroundStyle(Constants.Colors.darkGray)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            Spacer()
+            Button("Sign Out") { viewModel.signOut() }
+                .font(Constants.Settings.footerFont)
+                .foregroundStyle(Constants.Colors.red)
+                .buttonStyle(.scale)
+        }
+        .padding(Constants.Settings.rowPadding)
+    }
+
+}
+
+#Preview {
+    NavigationStack {
+        SettingsView()
+    }
 }

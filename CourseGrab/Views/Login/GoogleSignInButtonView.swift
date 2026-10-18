@@ -7,22 +7,15 @@
 
 import SwiftUI
 
-/// "Sign in with Google" button following Google's official branding guidelines:
-/// white surface, 1pt neutral stroke, multicolor "G", and the required
-/// "Sign in with Google" label. Rendered natively in SwiftUI (no legacy
-/// `GIDSignInButton` widget) so it matches modern iOS design.
+/// FA26 "Sign in with Google" button: white surface, radius 8, the multicolor "G"
+/// and the required "Sign in with Google" label (Google branding guidelines).
 struct GoogleSignInButtonView: View {
 
     // MARK: - Properties
 
     let viewModel: LoginViewModel
 
-    // Google-spec surface colors.
-    private let surface = Color.white
-    private let stroke = Color(red: 218/255, green: 220/255, blue: 224/255) // #dadce0
-    private let label = Color(red: 60/255, green: 64/255, blue: 67/255)     // #3c4043
-
-    // MARK: - Body
+    // MARK: - UI
 
     var body: some View {
         Button {
@@ -31,36 +24,36 @@ struct GoogleSignInButtonView: View {
                 // listener; ContentView reacts automatically.
             }
         } label: {
-            HStack(spacing: 12) {
-                Constants.Images.googleG
+            HStack(spacing: Constants.Splash.googleSpacing) {
+                Constants.Images.googleLogo
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 20, height: 20)
-
+                    .frame(width: Constants.Splash.googleLogoSize, height: Constants.Splash.googleLogoSize)
                 Text("Sign in with Google")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(label)
+                    .font(Constants.Fonts.googleButton)
+                    .tracking(Constants.Splash.googleTracking)
+                    .foregroundStyle(Constants.Colors.googleText)
             }
-            .frame(maxWidth: .infinity, minHeight: 48)
+            .padding(.horizontal, Constants.Splash.googleHorizontalPadding)
+            .padding(.vertical, Constants.Splash.googleVerticalPadding)
             .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(surface)
+                RoundedRectangle(cornerRadius: Constants.Radius.button, style: .continuous)
+                    .fill(Constants.Colors.white)
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(stroke, lineWidth: 1)
+            .shadow(
+                color: Constants.Splash.googleShadowColor,
+                radius: Constants.Splash.googleShadowRadius,
+                x: 0,
+                y: Constants.Splash.googleShadowY
             )
         }
-        .buttonStyle(GoogleSignInButtonStyle())
+        .buttonStyle(.scale)
     }
 
 }
 
-/// Subtle press feedback that keeps the Google-spec look intact.
-private struct GoogleSignInButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .opacity(configuration.isPressed ? 0.85 : 1)
-            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
-    }
+#Preview {
+    GoogleSignInButtonView(viewModel: LoginViewModel())
+        .padding()
+        .background(Constants.Colors.background)
 }

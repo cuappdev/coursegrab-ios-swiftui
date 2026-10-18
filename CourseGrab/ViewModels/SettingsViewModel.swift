@@ -21,6 +21,7 @@ extension SettingsView {
         @Published var localTimezoneEnabled: Bool = false
         @Published var canSendMail: Bool = false
         @Published var showMailError: Bool = false
+        @Published var showMailComposer: Bool = false
         @Published var accountEmail: String = ""
 
         private var sessionCancellables = Set<AnyCancellable>()
@@ -94,18 +95,38 @@ extension SettingsView {
             }
         }
         
+        /// Mobile Alerts switch: reflects the change immediately, then syncs permission / backend.
+        func setNotificationsEnabled(_ enabled: Bool) {
+            notificationsEnabled = enabled
+            toggleNotifications(enabled)
+        }
+
         func toggleLocalTimezone(_ enabled: Bool) {
             UserDefaults.standard.set(enabled, forKey: "localTimezoneEnabled")
         }
 
         func openCalendar() {
-            if let url = URL(string: "https://registrar.cornell.edu/academic-calendar") {
+            if let url = Constants.URLs.academicCalendar {
                 UIApplication.shared.open(url)
             }
         }
 
         func openStudentCenter() {
-            if let url = URL(string: "https://studentcenter.cornell.edu") {
+            if let url = Constants.URLs.studentCenter {
+                UIApplication.shared.open(url)
+            }
+        }
+
+        func leaveFeedback() {
+            if canSendMail {
+                showMailComposer = true
+            } else {
+                showMailError = true
+            }
+        }
+
+        func openAppSettings() {
+            if let url = URL(string: UIApplication.openSettingsURLString) {
                 UIApplication.shared.open(url)
             }
         }

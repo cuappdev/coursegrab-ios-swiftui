@@ -8,60 +8,75 @@
 import GoogleSignIn
 import SwiftUI
 
+/// FA26 Splash / sign-in: mesh background, "Welcome to CourseGrab", the wiggling bell
+/// and the Google sign-in button.
 struct LoginView: View {
 
     // MARK: - Properties
 
     @StateObject private var viewModel = LoginViewModel()
+    @StateObject private var bellAnimation = BellAnimationViewModel()
 
-    // MARK: - Body
+    // MARK: - UI
 
     var body: some View {
         ZStack {
-            Constants.Colors.black
+            HeaderBackgroundView()
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                Spacer()
-
-                Text("Welcome to")
-                    .foregroundStyle(.white)
-                    .font(Constants.Fonts.medium27)
-
-                Text("CourseGrab")
-                    .foregroundStyle(.white)
-                    .font(Constants.Fonts.bold40)
-                    .padding(.top, 8)
-
-                Constants.Images.courseGrabLogo
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 143, height: 140)
-                    .padding(.top, 44)
-
-                Spacer()
-
-                if viewModel.didPresentError {
-                    Text(viewModel.errorText)
-                        .foregroundStyle(Constants.Colors.ruby)
-                        .font(Constants.Fonts.regular14)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, Constants.Padding.screenHorizontal)
-                        .padding(.bottom, 12)
-                }
-
-                GoogleSignInButtonView(viewModel: viewModel)
-                    .frame(width: 260)
-                    .padding(.bottom, 60)
+            VStack(spacing: Constants.Splash.spacing) {
+                hero
+                signIn
             }
+            .padding(.horizontal, Constants.Padding.screenHorizontal)
 
             if viewModel.isLoading {
-                Color.black.opacity(0.3).ignoresSafeArea()
-                ProgressView()
-                    .tint(.white)
-                    .scaleEffect(1.5)
+                loadingOverlay
             }
+        }
+        .onAppear { bellAnimation.setAnimating(true) }
+        .onDisappear { bellAnimation.setAnimating(false) }
+    }
+
+    private var hero: some View {
+        VStack(spacing: Constants.Splash.heroSpacing) {
+            VStack(spacing: Constants.Splash.titleSpacing) {
+                Text("Welcome to")
+                    .font(Constants.Fonts.splashWelcome)
+                    .tracking(Constants.Splash.welcomeTracking)
+                Text("CourseGrab")
+                    .font(Constants.Fonts.splashTitle)
+            }
+            .foregroundStyle(Constants.Colors.white)
+
+            BellView(width: Constants.Splash.bellSize, animation: bellAnimation)
         }
     }
 
+    private var signIn: some View {
+        VStack(spacing: Constants.Splash.errorBottomPadding) {
+            if viewModel.didPresentError {
+                Text(viewModel.errorText)
+                    .font(Constants.Fonts.body)
+                    .foregroundStyle(Constants.Colors.red)
+                    .multilineTextAlignment(.center)
+            }
+            GoogleSignInButtonView(viewModel: viewModel)
+        }
+    }
+
+    private var loadingOverlay: some View {
+        ZStack {
+            Constants.Colors.scrim
+                .ignoresSafeArea()
+            ProgressView()
+                .tint(Constants.Colors.white)
+                .scaleEffect(Constants.Splash.loadingScale)
+        }
+    }
+
+}
+
+#Preview {
+    LoginView()
 }

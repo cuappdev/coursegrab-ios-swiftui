@@ -39,6 +39,21 @@ struct CourseSection: Codable, Identifiable {
     var displayTitle: String {
         "\(subjectCode) \(String(courseNum)): \(title)"
     }
+
+    /// Course code shown on FA26 cards, e.g. "ANTHR 1400".
+    var displayCode: String {
+        "\(subjectCode) \(String(courseNum))"
+    }
+
+    /// Instructor names for the card logistics row; "Staff" when none are listed.
+    var displayInstructors: String {
+        instructors.isEmpty ? "Staff" : instructors.joined(separator: ", ")
+    }
+
+    /// Whether this is a lecture section ("LEC …"), which the class detail screen lists first.
+    var isLecture: Bool {
+        section.uppercased().hasPrefix("LEC")
+    }
     
     func getSectionByTimezone() -> String {
         getSectionByTimezone(
