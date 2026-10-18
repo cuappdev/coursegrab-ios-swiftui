@@ -12,11 +12,15 @@ struct HomeView: View {
     // MARK: - Properties
 
     @StateObject private var viewModel = ViewModel()
+    @StateObject private var searchViewModel = SearchViewModel()
     @StateObject private var bellAnimation = BellAnimationViewModel()
-    @State private var showSearch = false
-    @State private var bannerMessage: String? = nil
-    @State private var showBanner: Bool = false
+    @FocusState private var isSearchFieldFocused: Bool
     @State private var showSettings = false
+
+    /// True once the user types anything: Home swaps its tracked list for live search results.
+    private var isSearching: Bool {
+        !searchViewModel.searchText.isEmpty
+    }
 
     // MARK: - UI
 
@@ -35,7 +39,7 @@ struct HomeView: View {
                 banner
                 stopTrackingModal
             }
-            .animation(.easeInOut(duration: Constants.Banner.animationDuration), value: showBanner)
+            .animation(.easeInOut(duration: Constants.Banner.animationDuration), value: viewModel.bannerMessage)
             .animation(
                 .easeInOut(duration: Constants.Interaction.modalAnimationDuration),
                 value: viewModel.sectionPendingUntrack?.id
@@ -45,6 +49,7 @@ struct HomeView: View {
                 SettingsView()
             }
             .errorAlert($viewModel.errorMessage)
+            .errorAlert($searchViewModel.errorMessage)
             .onChange(of: viewModel.isRefreshing) { isRefreshing in
                 bellAnimation.setAnimating(isRefreshing)
             }
@@ -62,52 +67,64 @@ struct HomeView: View {
             bellAnimation: bellAnimation,
             onSettingsTapped: { showSettings = true }
         ) {
-            searchFieldButton
-        }
-        .navigationDestination(isPresented: $showSearch) {
-            searchDestination
+            HStack(spacing: Constants.Header.searchRowSpacing) {
+                searchField
+                if isSearching || isSearchFieldFocused {
+                    clearButton
+                }
+            }
         }
     }
 
-    private var searchFieldButton: some View {
-        Button {
-            showSearch = true
-        } label: {
-            HStack(spacing: Constants.Header.searchIconSpacing) {
-                Constants.Images.search
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: Constants.Header.searchIconSize, height: Constants.Header.searchIconSize)
-                Text("Search for a course...")
-                    .font(Constants.Fonts.h4)
-                    .foregroundStyle(Constants.Colors.darkGray)
+    private var searchField: some View {
+        HStack(spacing: Constants.Header.searchIconSpacing) {
+            Constants.Images.search
+                .resizable()
+                .scaledToFit()
+                .frame(width: Constants.Header.searchIconSize, height: Constants.Header.searchIconSize)
+            TextField(
+                "",
+                text: $searchViewModel.searchText,
+                prompt: Text("Search for a course...").foregroundColor(Constants.Colors.darkGray)
+            )
+            .font(Constants.Fonts.h4)
+            .foregroundStyle(Constants.Colors.black)
+            .tint(Constants.Colors.black)
+            .autocorrectionDisabled()
+            .textInputAutocapitalization(.characters)
+            .submitLabel(.search)
+            .focused($isSearchFieldFocused)
+            .onChange(of: searchViewModel.searchText) { _ in
+                searchViewModel.onSearchTextChanged()
             }
-            .headerSearchFieldStyle()
+        }
+        .headerSearchFieldStyle()
+    }
+
+    /// FA26 circular ✕ that exits search in place, returning Home to the tracked list.
+    private var clearButton: some View {
+        Button {
+            searchViewModel.clear()
+            isSearchFieldFocused = false
+        } label: {
+            Constants.Images.clearSearch
+                .resizable()
+                .scaledToFit()
+                .frame(width: Constants.Header.clearIconSize, height: Constants.Header.clearIconSize)
+                .frame(width: Constants.Header.clearButtonSize, height: Constants.Header.clearButtonSize)
+                .background(Circle().fill(Constants.Colors.lightGray))
         }
         .buttonStyle(.scale)
-    }
-
-    private var searchDestination: some View {
-        SearchView(
-            onSectionTracked: { message in
-                showSearch = false
-                Task { await viewModel.fetchTrackedSections() }
-                bannerMessage = message // MARK: Completion Handler!
-                withAnimation { showBanner = true }
-                Task {
-                    try? await Task.sleep(nanoseconds: Constants.Banner.displayNanoseconds)
-                    withAnimation { showBanner = false }
-                }
-            },
-            onSettingsTapped: { showSettings = true }
-        )
+        .accessibilityLabel("Clear search")
     }
 
     // MARK: - Main Content
 
     @ViewBuilder
     private var mainContent: some View {
-        if viewModel.isLoading {
+        if isSearching {
+            searchContent
+        } else if viewModel.isLoading {
             ProgressView()
         } else if viewModel.hasError {
             stateContent(
@@ -167,11 +184,69 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - Search Content
+
+    @ViewBuilder
+    private var searchContent: some View {
+        if searchViewModel.showMinCharWarning {
+            HomeStateView(
+                title: "3 characters needed",
+                subtitle: "Please add more"
+            )
+        } else if searchViewModel.isLoading {
+            ProgressView()
+        } else if searchViewModel.courses.isEmpty && searchViewModel.hasSearched {
+            HomeStateView(
+                title: "No Results",
+                subtitle: "Try a different search",
+                image: Constants.Images.emptyNoCourses
+            )
+        } else {
+            searchResults
+        }
+    }
+
+    private var searchResults: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: Constants.Padding.sectionSpacing) {
+                if !searchViewModel.courses.isEmpty {
+                    SearchResultsHeaderView(count: searchViewModel.courses.count)
+                }
+                ForEach(searchViewModel.courses) { course in
+                    NavigationLink {
+                        SearchDetailView(
+                            course: course,
+                            searchViewModel: searchViewModel,
+                            onSectionTracked: { message in
+                                searchViewModel.clear()
+                                isSearchFieldFocused = false
+                                viewModel.showTrackingBanner(message)
+                                Task { await viewModel.fetchTrackedSections() }
+                            }
+                        )
+                    } label: {
+                        SearchCourseCardView(
+                            course: course,
+                            onUntrack: { section in
+                                Task { await searchViewModel.untrack(section: section) }
+                            }
+                        )
+                    }
+                    .buttonStyle(.scale)
+                }
+            }
+            .padding(.horizontal, Constants.Padding.screenHorizontal)
+            .padding(.top, Constants.Padding.sectionSpacing)
+            .padding(.bottom, Constants.Padding.screenBottom)
+        }
+        .scrollDismissesKeyboard(.immediately)
+    }
+
     // MARK: - Overlays
 
     @ViewBuilder
     private var banner: some View {
-        if showBanner, let message = bannerMessage {
+        if let message = viewModel.bannerMessage {
             VStack {
                 TrackingBannerView(message: message)
                     .transition(.move(edge: .top).combined(with: .opacity))

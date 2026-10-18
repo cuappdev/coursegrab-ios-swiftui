@@ -14,7 +14,7 @@ struct SearchDetailView: View {
     // MARK: - Properties
 
     let course: Course
-    @ObservedObject var searchViewModel: SearchView.ViewModel
+    @ObservedObject var searchViewModel: SearchViewModel
     let onSectionTracked: (_ message: String) -> Void
     @Environment(\.dismiss) private var dismiss
 
@@ -76,7 +76,7 @@ struct SearchDetailView: View {
 #if DEBUG
 #Preview {
     NavigationStack {
-        SearchDetailView(course: .mock, searchViewModel: SearchView.ViewModel(), onSectionTracked: { _ in })
+        SearchDetailView(course: .mock, searchViewModel: SearchViewModel(), onSectionTracked: { _ in })
     }
 }
 #endif

@@ -26,6 +26,10 @@ extension HomeView {
         /// Section awaiting confirmation in the stop-tracking modal.
         @Published var sectionPendingUntrack: CourseSection?
         @Published var errorMessage: String?
+        /// Transient confirmation banner shown after a track / untrack; `nil` hides it.
+        @Published private(set) var bannerMessage: String?
+
+        private var bannerTask: Task<Void, Never>?
 
         // MARK: - Computed
 
@@ -62,6 +66,10 @@ extension HomeView {
                 let sections = try await NetworkManager.shared.getAllTrackedSections()
                 availableSections = sections.filter { $0.status == Status.open }
                 awaitingSections = sections.filter { $0.status != Status.open }
+            } catch is CancellationError {
+                // A newer fetch superseded this one — not a real failure, so leave content as is.
+            } catch let error as URLError where error.code == .cancelled {
+                // Same as above: the request was cancelled, not a connectivity problem.
             } catch {
                 Logger.viewModels.error("fetchTrackedSections failed: \(error.localizedDescription, privacy: .public)")
                 if error.invalidatesUserSession {
@@ -78,6 +86,17 @@ extension HomeView {
             defer { isRefreshing = false }
             Haptics.shared.play(.light)
             await fetchTrackedSections(showsLoading: false)
+        }
+
+        /// Shows a confirmation banner for `message`, then auto-hides it after the display window.
+        func showTrackingBanner(_ message: String) {
+            bannerTask?.cancel()
+            bannerMessage = message
+            bannerTask = Task {
+                try? await Task.sleep(nanoseconds: Constants.Banner.displayNanoseconds)
+                guard !Task.isCancelled else { return }
+                bannerMessage = nil
+            }
         }
 
         func requestUntrack(_ section: CourseSection) {
